@@ -78,4 +78,263 @@
   canvas {
     display: block;
     width: 100%;
-    height: auto
+    height: auto;
+    max-width: 1100px;
+    background: #0a1a0a radial-gradient(120% 120% at 50% 10%, rgba(255,255,255,.06), transparent);
+    border: 2px solid #0f2411;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.03);
+  }
+  .hint {
+    text-align: center;
+    opacity: .8;
+    font-size: 14px;
+    margin: 0 10px 14px;
+  }
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(2, 6, 23, .65);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .panel {
+    background: #0b1220;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 18px;
+    width: min(92vw, 420px);
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  .panel h2 { margin: 0 0 8px; font-size: 26px; color: #f8fafc; }
+  .panel p { margin: 6px 0 14px; opacity: .85; }
+  .kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .9em;
+    background: #0f172a;
+    color: #e5e7eb;
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Football Bros</h1>
+    <div class="spacer"></div>
+    <div class="score">
+      <div class="badge"><span class="p1">P1</span> <b id="s1">0</b></div>
+      <div class="badge timer"><b id="clock">02:00</b></div>
+      <div class="badge"><span class="p2">P2</span> <b id="s2">0</b></div>
+    </div>
+    <div class="spacer"></div>
+    <button id="new">New Match</button>
+    <button id="pause">Pause</button>
+  </div>
+
+  <div class="wrap">
+    <canvas id="game" width="1280" height="720" aria-label="Football Bros field"></canvas>
+  </div>
+
+  <p class="hint">
+    Player 1: A/D to move, W to jump, F to kick • Player 2: Left/Right to move, Up to jump, / to kick
+  </p>
+
+  <div id="overlay" class="overlay" aria-live="polite" role="dialog">
+    <div class="panel">
+      <h2 id="ov-title">Goal!</h2>
+      <p id="ov-sub">Press Space to continue</p>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="btn-continue">Continue</button>
+        <button id="btn-restart">New Match</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // World units (meters). Canvas will scale to fit.
+  const W = 48;   // field width
+  const H = 27;   // field height
+  const G = 32;   // gravity m/s^2
+
+  // Goals (as gaps in side walls)
+  const GOAL_TOP = H * 0.32;
+  const GOAL_BOT = H * 0.68;
+  const GOAL_DEPTH = 0.6; // meters behind line for scoring
+
+  // Entities
+  const ball = {
+    x: W / 2, y: H / 2, r: 0.7, vx: 0, vy: 0, m: 1, color: '#ffffff'
+  };
+  const p1 = makePlayer(W * 0.22, H - 2, '#3b82f6');
+  const p2 = makePlayer(W * 0.78, H - 2, '#f59e0b');
+
+  function makePlayer(x, y, color) {
+    return {
+      x, y, r: 1.2, vx: 0, vy: 0, m: 2.2, color,
+      left: false, right: false, jump: false, kick: false, face: 1,
+      onGround: false, kickCD: 0
+    };
+  }
+
+  // Match state
+  let score1 = 0, score2 = 0;
+  let timeLeft = 120; // seconds
+  let paused = false;
+  let freezeUntil = 0; // ms timestamp while showing goal
+  let lastTime = performance.now();
+
+  // DOM
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const s1El = document.getElementById('s1');
+  const s2El = document.getElementById('s2');
+  const clockEl = document.getElementById('clock');
+  const btnNew = document.getElementById('new');
+  const btnPause = document.getElementById('pause');
+  const overlay = document.getElementById('overlay');
+  const ovTitle = document.getElementById('ov-title');
+  const ovSub = document.getElementById('ov-sub');
+  const btnContinue = document.getElementById('btn-continue');
+  const btnRestart = document.getElementById('btn-restart');
+
+  // Resize handling (keep 16:9 and scale world to canvas)
+  function fitCanvas() {
+    const maxW = Math.min(window.innerWidth - 20, 1200);
+    const maxH = window.innerHeight - 150;
+    const aspect = 16 / 9;
+    let w = maxW, h = Math.round(maxW / aspect);
+    if (h > maxH) { h = maxH; w = Math.round(maxH * aspect); }
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  function resetPositions(kickoffRight = Math.random() < 0.5) {
+    ball.x = W / 2; ball.y = H * 0.4; ball.vx = 0; ball.vy = 0;
+    p1.x = W * 0.2; p1.y = H - p1.r - 0.01; p1.vx = p1.vy = 0; p1.face = 1;
+    p2.x = W * 0.8; p2.y = H - p2.r - 0.01; p2.vx = p2.vy = 0; p2.face = -1;
+    // Give a tiny tap at kickoff
+    const kick = 6;
+    ball.vx = kickoffRight ? kick : -kick;
+    ball.vy = -2;
+  }
+
+  function newMatch() {
+    score1 = 0; score2 = 0;
+    timeLeft = 120;
+    paused = false;
+    hideOverlay();
+    resetPositions();
+  }
+
+  function formatClock(sec) {
+    sec = Math.max(0, Math.ceil(sec));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(1,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  // Input
+  const keys = new Set();
+  const Key = {
+    A: 'KeyA', D: 'KeyD', W: 'KeyW', F: 'KeyF',
+    LEFT: 'ArrowLeft', RIGHT: 'ArrowRight', UP: 'ArrowUp', SLASH: 'Slash',
+    SPACE: 'Space', P: 'KeyP'
+  };
+  window.addEventListener('keydown', (e) => {
+    if (Object.values(Key).includes(e.code)) e.preventDefault();
+    keys.add(e.code);
+    if (e.code === Key.P || e.code === Key.SPACE) togglePause();
+  }, { passive: false });
+  window.addEventListener('keyup', (e) => { keys.delete(e.code); });
+
+  btnNew.addEventListener('click', newMatch);
+  btnPause.addEventListener('click', togglePause);
+  btnContinue.addEventListener('click', () => { hideOverlay(); unfreeze(); });
+  btnRestart.addEventListener('click', () => { hideOverlay(); newMatch(); });
+
+  function togglePause() {
+    if (now() < freezeUntil) return; // ignore during freeze
+    paused = !paused;
+    btnPause.textContent = paused ? 'Resume' : 'Pause';
+  }
+
+  function showOverlay(title, sub = 'Press Space or Continue') {
+    ovTitle.textContent = title;
+    ovSub.textContent = sub;
+    overlay.classList.add('show');
+    paused = true;
+    btnPause.textContent = 'Resume';
+  }
+  function hideOverlay() {
+    overlay.classList.remove('show');
+  }
+  function freeze(ms, message) {
+    freezeUntil = now() + ms;
+    if (message) showOverlay(message, 'Continue when ready');
+  }
+  function unfreeze() {
+    hideOverlay();
+    paused = false;
+    btnPause.textContent = 'Pause';
+    freezeUntil = 0;
+  }
+  function now() { return performance.now(); }
+
+  // Physics helpers
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function len(x, y) { return Math.hypot(x, y); }
+
+  function resolveCircleCollision(a, b, restitution = 0.4) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const dist = Math.hypot(dx, dy) || 1e-6;
+    const overlap = a.r + b.r - dist;
+    if (overlap <= 0) return;
+
+    // Push out along normal
+    const nx = dx / dist, ny = dy / dist;
+    const totalMass = a.m + b.m;
+    const pushA = (overlap * (b.m / totalMass));
+    const pushB = (overlap * (a.m / totalMass));
+    a.x -= nx * pushA; a.y -= ny * pushA;
+    b.x += nx * pushB; b.y += ny * pushB;
+
+    // Relative velocity along normal
+    const rvx = b.vx - a.vx;
+    const rvy = b.vy - a.vy;
+    const vn = rvx * nx + rvy * ny;
+    if (vn > 0) return; // separating
+
+    // Impulse scalar
+    const j = -(1 + restitution) * vn / (1 / a.m + 1 / b.m);
+    const ix = j * nx, iy = j * ny;
+    a.vx -= ix / a.m; a.vy -= iy / a.m;
+    b.vx += ix / b.m; b.vy += iy / b.m;
+  }
+
+  // Game loop (fixed timestep)
+  const FIXED_DT = 1 / 60;
+  let acc = 0;
+
+  function update(dt) {
+    // Skip updates while frozen
+    const time = now();
+    const frozen = time < freezeUntil;
+    if (!paused && !frozen) {
+      timeLeft -= dt;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        showOverlay(finalResult(), 'New match to play again');
+      }
+    }
+    clockEl.textContent = format
