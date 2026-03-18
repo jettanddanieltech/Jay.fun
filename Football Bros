@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Football Bros</title>
+<style>
+  :root {
+    --ui: #1f2937;
+    --accent: #10b981;
+    --p1: #3b82f6;
+    --p2: #f59e0b;
+    --bg: #0b1220;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 10px;
+    background: var(--bg);
+    color: #e5e7eb;
+    font: 16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px clamp(10px, 3vw, 18px);
+    background: #0f172a;
+    border-bottom: 1px solid #0b1220;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(18px, 4.2vw, 28px);
+    letter-spacing: .5px;
+    color: #f8fafc;
+  }
+  .spacer { flex: 1; }
+  .score {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+  }
+  .badge {
+    display: inline-grid;
+    grid-auto-flow: column;
+    place-items: center;
+    gap: 8px;
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    padding: 6px 10px;
+    min-width: 92px;
+  }
+  .badge b { font-size: 20px; }
+  .p1 { color: var(--p1); }
+  .p2 { color: var(--p2); }
+  .timer { color: var(--accent); min-width: 88px; text-align: center; }
+  button {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button:hover { background: #223048; }
+  button:active { transform: translateY(1px); }
+  .wrap {
+    display: grid;
+    place-items: center;
+    padding: clamp(8px, 3vw, 18px);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto
