@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Overclock TD: Extreme</title>
+    <style>
+        body { background: #0a0a0a; color: #00ffcc; font-family: 'Courier New', monospace; margin: 0; display: flex; height: 100vh; }
+        #sidebar { width: 300px; background: #151515; border-right: 2px solid #333; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        #game-container { flex-grow: 1; position: relative; display: flex; justify-content: center; align-items: center; background: #000; }
+        canvas { background: #1a1a1a; border: 2px solid #00ffcc; cursor: crosshair; box-shadow: 0 0 30px rgba(0, 255, 204, 0.2); }
+        .stat-box { font-size: 1.5rem; font-weight: bold; color: #fff; text-shadow: 0 0 5px #00ffcc; }
+        .tower-card { background: #222; border: 1px solid #444; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .tower-card:hover { border-color: #00ffcc; background: #2a2a2a; }
+        .tower-card h4 { margin: 0 0 5px 0; color: #00ffcc; }
+        .tower-card p { margin: 0; font-size: 0.8rem; color: #888; }
+        #wave-btn { background: #00ffcc; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: auto; }
+        #wave-btn:hover { background: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2 style="margin:0">OVERCLOCK TD</h2>
+        <div class="stat-box">Cash: $<span id="money">650</span></div>
+        <div class="stat-box">Shield: <span id="lives">100</span></div>
+        <hr style="width:100%; border:0; border-top:1px solid #333">
+        
+        <div class="tower-card" onclick="selectTower('dart')">
+            <h4>Dart Monkey</h4>
+            <p>Cost: $200 | Range: 150</p>
+        </div>
+        <div class="tower-card" onclick="selectTower('ninja')">
+            <h4>Ninja Monkey</h4>
+            <p>Cost: $500 | Fast Attack</p>
+        </div>
+        <div class="tower-card" onclick="selectTower('super')">
+            <h4>Super Monkey</h4>
+            <p>Cost: $2500 | Extreme Speed</p>
+        </div>
+
+        <button id="wave-btn" onclick="nextWave()">START NEXT WAVE</button>
+    </div>
+
+    <div id="game-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let money = 650;
+    let lives = 100;
+    let wave = 0;
+    let selectedTower = null;
+    let towers = [];
+    let enemies = [];
+    let bullets = [];
+
+    const path = [{x:0, y:3
