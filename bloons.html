@@ -2,60 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BOONSHOOTER // OMNI-EDITION</title>
+    <title>BOONSHOOTER // OMNI-REVELATION</title>
     <style>
-        :root { --bg: #000; --blue: #33BBFF; --green: #00FF41; --text: #fff; --panel: #0a0a0a; }
-        body.light-theme { --bg: #eee; --blue: #0077ff; --green: #00aa00; --text: #000; --panel: #ddd; }
+        :root { --bg: #000; --blue: #33BBFF; --green: #00FF41; --text: #fff; --panel: #0a0a0a; --danger: #ff4444; }
+        body.light-theme { --bg: #f0f0f0; --blue: #0077ff; --green: #00aa00; --text: #000; --panel: #fff; }
         
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; transition: 0.3s; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; transition: background 0.5s; }
         
         /* UI OVERLAYS */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .menu-screen { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: all; z-index: 100; }
+        .menu-screen { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: 0.5s; }
         
-        .logo { font-size: 80px; font-weight: 900; color: var(--blue); text-shadow: 0 0 20px rgba(51,187,255,0.5); letter-spacing: -5px; transform: rotate(-3deg); margin-bottom: 20px; }
+        .logo { font-size: clamp(40px, 8vw, 90px); font-weight: 900; color: var(--blue); text-shadow: 0 0 30px rgba(51,187,255,0.6); transform: rotate(-2deg); margin-bottom: 10px; }
         .logo span { color: var(--green); }
 
-        .btn { background: var(--panel); border: 2px solid var(--blue); color: var(--blue); padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; margin: 10px; transition: 0.2s; pointer-events: all; }
-        .btn:hover { background: var(--blue); color: #000; box-shadow: 0 0 20px var(--blue); }
+        .btn { background: var(--panel); border: 2px solid var(--blue); color: var(--blue); padding: 12px 35px; border-radius: 12px; cursor: pointer; font-weight: bold; margin: 8px; transition: 0.3s; font-size: 14px; text-transform: uppercase; }
+        .btn:hover { background: var(--blue); color: #000; box-shadow: 0 0 25px var(--blue); transform: scale(1.05); }
 
-        #sidebar { position: absolute; right: 0; top: 0; width: 300px; height: 100%; background: var(--panel); border-left: 1px solid var(--border); pointer-events: all; padding: 20px; overflow-y: auto; }
-        .tower-card { background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .tower-card:hover { border-color: var(--green); }
-        .tower-card.locked { opacity: 0.4; pointer-events: none; }
+        #sidebar { position: absolute; right: 0; top: 0; width: 280px; height: 100%; background: var(--panel); border-left: 1px solid #222; padding: 20px; overflow-y: auto; z-index: 50; }
+        .tower-card { background: #111; border: 1px solid #222; padding: 12px; margin-bottom: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
+        .tower-card:hover { border-color: var(--green); transform: translateX(-5px); }
+        .tower-card small { color: var(--green); }
 
-        #stats { position: absolute; top: 20px; left: 20px; font-size: 20px; color: var(--green); font-family: monospace; }
-        canvas { background: #000; display: block; }
+        #stats-hud { position: absolute; top: 20px; left: 20px; font-size: 18px; color: var(--green); background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 30px; border: 1px solid #222; z-index: 60; }
+        canvas { display: block; filter: contrast(1.2); }
+        
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
     </style>
 </head>
-<body>
+<body id="game-body">
 
-<div id="stats">CASH: $<span id="money">650</span> | LIVES: <span id="lives">100</span> | ROUND: <span id="round">1</span></div>
+<div id="stats-hud">
+    💰 $<span id="money">650</span> | ❤️ <span id="lives">100</span> | 📈 ROUND: <span id="round">1</span>
+</div>
 
 <div id="main-menu" class="menu-screen">
     <div class="logo">BOON<span>SHOOTER</span></div>
-    <div style="color:var(--green); margin-bottom: 30px; letter-spacing: 5px;">OMNI-VERSION ACTIVATED</div>
-    <button class="btn" onclick="startGame()">START MISSION</button>
-    <button class="btn" onclick="toggleScreen('settings-menu')">SETTINGS</button>
-    <button class="btn" onclick="toggleScreen('shop-menu')">BALLOON SHOP</button>
-</div>
-
-<div id="settings-menu" class="menu-screen" style="display:none;">
-    <h2>SYSTEM SETTINGS</h2>
-    <button class="btn" onclick="toggleTheme()">TOGGLE THEME (DARK/LIGHT)</button>
-    <button class="btn" onclick="toggleScreen('main-menu')">BACK</button>
+    <div style="color:var(--green); margin-bottom: 40px; font-size: 10px; letter-spacing: 4px;">OMNI_CORE V1.2 // PERSISTENT_MEMORY_ON</div>
+    <button class="btn" onclick="startGame()">INITIATE MISSION</button>
+    <button class="btn" onclick="openMenu('settings-menu')">SETTINGS</button>
+    <button class="btn" onclick="openMenu('shop-menu')">BALLOON MARKET</button>
+    <div id="high-score-display" style="margin-top:20px; font-size: 12px; opacity:0.6;">BEST ROUND: 0</div>
 </div>
 
 <div id="shop-menu" class="menu-screen" style="display:none;">
-    <h2>BALLOON MARKET</h2>
-    <p>Buy premium balloons to increase cash per pop!</p>
-    <button class="btn" onclick="buyBalloonType('Gold', 500)">GOLD BALLOONS ($500)</button>
-    <button class="btn" onclick="buyBalloonType('Diamond', 2000)">DIAMOND BALLOONS ($2000)</button>
-    <button class="btn" onclick="toggleScreen('main-menu')">BACK</button>
+    <h2 style="color:var(--blue)">MARKETPLACE</h2>
+    <button class="btn" onclick="buyPerk('Gold', 800)">GOLD BALLOONS (2X CASH)</button>
+    <button class="btn" onclick="buyPerk('Swift', 1500)">SPEED UPGRADE (+10% RELOAD)</button>
+    <button class="btn" onclick="openMenu('main-menu')">RETURN</button>
+</div>
+
+<div id="settings-menu" class="menu-screen" style="display:none;">
+    <h2 style="color:var(--blue)">SYSTEM CONFIG</h2>
+    <button class="btn" onclick="toggleTheme()">TOGGLE VISUAL THEME</button>
+    <button class="btn" onclick="resetSave()" style="border-color:var(--danger); color:var(--danger)">ERASE MEMORY</button>
+    <button class="btn" onclick="openMenu('main-menu')">RETURN</button>
 </div>
 
 <div id="sidebar" style="display:none;">
-    <h3 style="color:var(--blue)">ARMORY</h3>
+    <h4 style="color:var(--blue); text-align:center; margin-top:0;">DEFENSE UNITS</h4>
     <div id="tower-list"></div>
 </div>
 
@@ -67,155 +72,127 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    let gameState = {
-        money: 650,
-        lives: 100,
-        round: 1,
-        active: false,
-        theme: 'dark',
-        multiplier: 1,
-        towers: [],
-        balloons: [],
-        bullets: []
+    let state = {
+        money: 650, lives: 100, round: 1, active: false, multiplier: 1,
+        towers: [], balloons: [], particles: [], bestRound: 0
     };
 
-    const TOWER_TYPES = [
-        { name: "Dart", cost: 200, color: "#33BBFF", type: "dart", range: 150 },
-        { name: "Ice", cost: 350, color: "#A0E7FF", type: "ice", range: 120 },
-        { name: "Slime", cost: 400, color: "#32CD32", type: "slime", range: 100 },
-        { name: "Heli", cost: 1200, color: "#555", type: "heli", range: 300 },
-        { name: "Nuke", cost: 5000, color: "#FFD700", type: "nuke", range: 400 },
-        { name: "Time-Stop", cost: 8000, color: "#8A2BE2", type: "time", range: 1000 },
-        // ... adding logic for 20 slots
+    const TOWER_DATA = [
+        { name: "Recruit", cost: 200, color: "#33BBFF", type: "dart", range: 160 },
+        { name: "Frost Knight", cost: 450, color: "#00FFFF", type: "ice", range: 130 },
+        { name: "Acid Slime", cost: 600, color: "#39FF14", type: "slime", range: 110 },
+        { name: "Sky Heli", cost: 1500, color: "#CCCCCC", type: "heli", range: 350 },
+        { name: "Atomic Nuke", cost: 6000, color: "#FF3131", type: "nuke", range: 500 },
+        { name: "Void Clock", cost: 9000, color: "#BC13FE", type: "time", range: 1000 }
     ];
 
-    function toggleScreen(id) {
-        document.querySelectorAll('.menu-screen').forEach(s => s.style.display = 'none');
+    function openMenu(id) {
+        document.querySelectorAll('.menu-screen').forEach(m => m.style.display = 'none');
         document.getElementById(id).style.display = 'flex';
-    }
-
-    function toggleTheme() {
-        gameState.theme = gameState.theme === 'dark' ? 'light' : 'dark';
-        document.body.className = gameState.theme + '-theme';
-    }
-
-    function buyBalloonType(type, cost) {
-        if(gameState.money >= cost) {
-            gameState.money -= cost;
-            gameState.multiplier += (type === 'Gold' ? 0.5 : 1.5);
-            updateUI();
-            alert(type + " Balloons active! Cash flow increased.");
-        }
-    }
-
-    function updateUI() {
-        document.getElementById('money').innerText = Math.floor(gameState.money);
-        document.getElementById('lives').innerText = gameState.lives;
-        document.getElementById('round').innerText = gameState.round;
     }
 
     function startGame() {
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('sidebar').style.display = 'block';
-        gameState.active = true;
-        renderTowers();
+        state.active = true;
+        renderArmory();
         gameLoop();
     }
 
-    function renderTowers() {
-        const list = document.getElementById('tower-list');
-        list.innerHTML = "";
-        TOWER_TYPES.forEach(t => {
-            list.innerHTML += `
-                <div class="tower-card" onclick="selectTower('${t.type}')">
-                    <div style="width:20px; height:20px; background:${t.color}; border-radius:50%"></div>
-                    <div><b>${t.name}</b><br><small>$${t.cost}</small></div>
-                </div>
-            `;
-        });
+    function renderArmory() {
+        const container = document.getElementById('tower-list');
+        container.innerHTML = TOWER_DATA.map(t => `
+            <div class="tower-card" onclick="selectedTowerType='${t.type}'">
+                <div style="width:15px; height:15px; background:${t.color}; border-radius:50%"></div>
+                <div><b>${t.name}</b><br><small>$${t.cost}</small></div>
+            </div>
+        `).join('');
     }
 
-    let selectedTower = null;
-    function selectTower(type) {
-        selectedTower = TOWER_TYPES.find(t => t.type === type);
-    }
+    let selectedTowerType = 'dart';
 
-    canvas.addEventListener('mousedown', (e) => {
-        if(!selectedTower || gameState.money < selectedTower.cost) return;
-        
-        gameState.towers.push({
-            x: e.clientX,
-            y: e.clientY,
-            ...selectedTower,
-            lastShot: 0
-        });
-        gameState.money -= selectedTower.cost;
-        updateUI();
+    canvas.addEventListener('click', (e) => {
+        const type = TOWER_DATA.find(t => t.type === selectedTowerType);
+        if(state.money >= type.cost) {
+            state.towers.push({ x: e.clientX, y: e.clientY, ...type, lastShot: 0 });
+            state.money -= type.cost;
+            updateHUD();
+        }
     });
 
-    function drawAvatar(ctx, x, y, type, color) {
-        ctx.fillStyle = color;
-        if(type === 'heli') {
-            ctx.fillRect(x-15, y-5, 30, 10); // Body
-            ctx.beginPath();
-            ctx.strokeStyle = "#fff";
-            ctx.moveTo(x-20, y); ctx.lineTo(x+20, y); // Blades
-            ctx.stroke();
-        } else if(type === 'nuke') {
-            ctx.beginPath();
-            ctx.arc(x, y, 15, 0, Math.PI*2);
-            ctx.fill();
-            ctx.strokeStyle = "red";
-            ctx.strokeRect(x-18, y-18, 36, 36);
-        } else {
-            ctx.beginPath();
-            ctx.arc(x, y, 12, 0, Math.PI*2);
-            ctx.fill();
-            // Add a little "visor" to make them unique avatars
-            ctx.fillStyle = "#000";
-            ctx.fillRect(x+2, y-5, 8, 4);
+    function updateHUD() {
+        document.getElementById('money').innerText = Math.floor(state.money);
+        document.getElementById('lives').innerText = state.lives;
+        document.getElementById('round').innerText = state.round;
+        if(state.round > state.bestRound) {
+            state.bestRound = state.round;
+            localStorage.setItem('boon_best', state.bestRound);
+        }
+    }
+
+    function spawnBalloons() {
+        if(Math.random() < 0.03 + (state.round * 0.005)) {
+            state.balloons.push({ x: 0, y: canvas.height/2, hp: Math.ceil(state.round/2), speed: 2 + (state.round*0.1) });
+        }
+    }
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<8; i++) {
+            state.particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1, color });
         }
     }
 
     function gameLoop() {
-        if(!gameState.active) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if(!state.active) return;
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+        
+        spawnBalloons();
 
-        // Spawn logic
-        if(Math.random() < 0.02) {
-            gameState.balloons.push({ x: 0, y: canvas.height/2, hp: gameState.round, speed: 2 });
-        }
+        // Particles
+        state.particles.forEach((p, i) => {
+            p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+            if(p.life <= 0) state.particles.splice(i, 1);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.fillRect(p.x, p.y, 4, 4);
+            ctx.globalAlpha = 1;
+        });
 
-        // Draw Balloons
-        gameState.balloons.forEach((b, i) => {
+        // Balloons
+        state.balloons.forEach((b, i) => {
             b.x += b.speed;
-            ctx.fillStyle = "red";
+            ctx.fillStyle = "#ff4444";
             ctx.beginPath();
-            ctx.arc(b.x, b.y, 15, 0, Math.PI*2);
+            ctx.arc(b.x, b.y, 12, 0, Math.PI*2);
             ctx.fill();
-
             if(b.x > canvas.width) {
-                gameState.lives--;
-                gameState.balloons.splice(i, 1);
-                updateUI();
+                state.lives -= 1;
+                state.balloons.splice(i, 1);
+                updateHUD();
             }
         });
 
-        // Draw Towers & Shoot
-        gameState.towers.forEach(t => {
-            drawAvatar(ctx, t.x, t.y, t.type, t.color);
+        // Towers
+        state.towers.forEach(t => {
+            ctx.fillStyle = t.color;
+            ctx.beginPath(); ctx.arc(t.x, t.y, 15, 0, Math.PI*2); ctx.fill();
             
-            // Shooting logic
             let now = Date.now();
-            if(now - t.lastShot > 1000) {
-                gameState.balloons.forEach((b, bi) => {
-                    let dist = Math.hypot(t.x - b.x, t.y - b.y);
-                    if(dist < t.range) {
+            if(now - t.lastShot > 800) {
+                state.balloons.forEach((b, bi) => {
+                    let d = Math.hypot(t.x - b.x, t.y - b.y);
+                    if(d < t.range) {
                         b.hp--;
+                        if(t.type === 'nuke') {
+                            document.getElementById('game-body').classList.add('shake');
+                            setTimeout(() => document.getElementById('game-body').classList.remove('shake'), 400);
+                        }
                         if(b.hp <= 0) {
-                            gameState.balloons.splice(bi, 1);
-                            gameState.money += 20 * gameState.multiplier;
-                            updateUI();
+                            createExplosion(b.x, b.y, t.color);
+                            state.balloons.splice(bi, 1);
+                            state.money += 25 * state.multiplier;
+                            updateHUD();
                         }
                         t.lastShot = now;
                     }
@@ -223,8 +200,18 @@
             }
         });
 
+        if(state.lives <= 0) {
+            alert("MISSION FAILED. FINAL ROUND: " + state.round);
+            location.reload();
+        }
+
         requestAnimationFrame(gameLoop);
     }
+
+    window.onload = () => {
+        state.bestRound = localStorage.getItem('boon_best') || 0;
+        document.getElementById('high-score-display').innerText = "BEST ROUND: " + state.bestRound;
+    };
 </script>
 </body>
 </html>
