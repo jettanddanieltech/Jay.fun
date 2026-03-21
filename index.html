@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE_TECH_INDEX // GLOBAL_HUB</title>
+    <style>
+        :root { 
+            --bg: #000; 
+            --blue: #33BBFF; 
+            --green: #00FF41; 
+            --border: #111; 
+            --panel: #080808;
+        }
+
+        body { 
+            background: var(--bg); 
+            color: var(--blue); 
+            font-family: 'Inter', 'Segoe UI', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* HUD HEADER */
+        .hud-header { 
+            padding: 15px 30px; 
+            border-bottom: 1px solid var(--border); 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 10px; 
+            letter-spacing: 3px; 
+            color: var(--green); 
+            text-transform: uppercase;
+        }
+
+        /* MAIN LAYOUT */
+        #container { 
+            display: flex; 
+            flex-grow: 1; 
+        }
+
+        /* SIDEBAR NAVIGATION */
+        #sidebar { 
+            width: 280px; 
+            background: var(--panel); 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px; 
+        }
+
+        .category-label { 
+            font-size: 11px; 
+            color: #444; 
+            margin-bottom: 15px; 
+            letter-spacing: 2px; 
+        }
+
+        .nav-link { 
+            padding: 12px 15px; 
+            margin-bottom: 8px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            border: 1px solid transparent; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-link:hover { 
+            background: #0c0c0c; 
+            border-color: var(--blue); 
+            color: #fff; 
+            box-shadow: 0 0 15px rgba(51, 187, 255, 0.1); 
+        }
+
+        /* PORTAL PREVIEW */
+        #portal { 
+            flex-grow: 1; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 25px; 
+            padding: 40px; 
+            overflow-y: auto; 
+            background: radial-gradient(circle at center, #050505 0%, #000 100%);
+        }
+
+        .game-card { 
+            background: var(--panel); 
+            border: 1px solid var(--border); 
+            border-radius: 20px; 
+            padding: 30px; 
+            text-align: center; 
+            transition: 0.4s; 
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+        }
+
+        .game-card:hover { 
+            border-color: var(--green); 
+            transform: translateY(-5px); 
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.1); 
+        }
+
+        .game-card h2 { margin: 10px 0; font-size: 24px; color: #fff; }
+        .game-card p { font-size: 13px; color: #666; }
+        
+        .status-dot { 
+            width: 8px; height: 8px; 
+            border-radius: 50%; 
+            background: var(--green); 
+            display: inline-block; 
+            margin-right: 10px; 
+            box-shadow: 0 0 8px var(--green);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="hud-header">
+    <span>System: THE_TECH_INDEX</span>
+    <span>Status: All Nodes Operational</span>
+    <span>Access_Level: Administrator</span>
+</div>
+
+<div id="container">
+    <nav id="sidebar">
+        <div class="category-label">SYSTEM_PROJECTS</div>
+        <a href="index.html" class="nav-link">🏠 Main Terminal</a>
+        <a href="tetris.html" class="nav-link">🧱 Tetris Engine</a>
+        <a href="bloons.html" class="nav-link">🎈 BoonShooter</a>
+        <a href="2048.html" class="nav-link">🔢 2048 Logic</a>
+        <a href="football.html" class="nav-link">🏈 Football Bros</a>
+        <a href="clickit.html" class="nav-link">🖱️ ClickIt.html</a>
+    </nav>
+
+    <main id="portal">
+        <a href="tetris.html" style="text-decoration:none">
+            <div class="game-card">
+                <div class="status-dot"></div>
+                <h2>TETRIS</h2>
+                <p>Full-scale neural engine block.</p>
+            </div>
+        </a>
+
+        <a href="bloons.html" style="text-decoration:none">
+            <div class="game-card">
+                <div class="status-dot"></div>
+                <h2>BOONSHOOTER</h2>
+                <p>Advanced monkey-defense simulation.</p>
+            </div>
+        </a>
+
+        <a href="2048.html" style="text-decoration:none">
+            <div class="game-card">
+                <div class="status-dot"></div>
+                <h2>2048</h2>
+                <p>Recursive grid-merging logic.</p>
+            </div>
+        </a>
+
+        <a href="football.html" style="text-decoration:none">
+            <div class="game-card">
+                <div class="status-dot"></div>
+                <h2>FOOTBALL BROS</h2>
+                <p>Physics-based roster management.</p>
+            </div>
+        </a>
+    </main>
+</div>
+
+</body>
+</html>
