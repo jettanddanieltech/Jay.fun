@@ -2,59 +2,229 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Overclock TD: Extreme</title>
+    <title>BOONSHOOTER // OMNI-EDITION</title>
     <style>
-        body { background: #0a0a0a; color: #00ffcc; font-family: 'Courier New', monospace; margin: 0; display: flex; height: 100vh; }
-        #sidebar { width: 300px; background: #151515; border-right: 2px solid #333; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        #game-container { flex-grow: 1; position: relative; display: flex; justify-content: center; align-items: center; background: #000; }
-        canvas { background: #1a1a1a; border: 2px solid #00ffcc; cursor: crosshair; box-shadow: 0 0 30px rgba(0, 255, 204, 0.2); }
-        .stat-box { font-size: 1.5rem; font-weight: bold; color: #fff; text-shadow: 0 0 5px #00ffcc; }
-        .tower-card { background: #222; border: 1px solid #444; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .tower-card:hover { border-color: #00ffcc; background: #2a2a2a; }
-        .tower-card h4 { margin: 0 0 5px 0; color: #00ffcc; }
-        .tower-card p { margin: 0; font-size: 0.8rem; color: #888; }
-        #wave-btn { background: #00ffcc; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: auto; }
-        #wave-btn:hover { background: #fff; }
+        :root { --bg: #000; --blue: #33BBFF; --green: #00FF41; --text: #fff; --panel: #0a0a0a; }
+        body.light-theme { --bg: #eee; --blue: #0077ff; --green: #00aa00; --text: #000; --panel: #ddd; }
+        
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; transition: 0.3s; }
+        
+        /* UI OVERLAYS */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .menu-screen { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: all; z-index: 100; }
+        
+        .logo { font-size: 80px; font-weight: 900; color: var(--blue); text-shadow: 0 0 20px rgba(51,187,255,0.5); letter-spacing: -5px; transform: rotate(-3deg); margin-bottom: 20px; }
+        .logo span { color: var(--green); }
+
+        .btn { background: var(--panel); border: 2px solid var(--blue); color: var(--blue); padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; margin: 10px; transition: 0.2s; pointer-events: all; }
+        .btn:hover { background: var(--blue); color: #000; box-shadow: 0 0 20px var(--blue); }
+
+        #sidebar { position: absolute; right: 0; top: 0; width: 300px; height: 100%; background: var(--panel); border-left: 1px solid var(--border); pointer-events: all; padding: 20px; overflow-y: auto; }
+        .tower-card { background: #111; border: 1px solid #222; padding: 10px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .tower-card:hover { border-color: var(--green); }
+        .tower-card.locked { opacity: 0.4; pointer-events: none; }
+
+        #stats { position: absolute; top: 20px; left: 20px; font-size: 20px; color: var(--green); font-family: monospace; }
+        canvas { background: #000; display: block; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <h2 style="margin:0">OVERCLOCK TD</h2>
-        <div class="stat-box">Cash: $<span id="money">650</span></div>
-        <div class="stat-box">Shield: <span id="lives">100</span></div>
-        <hr style="width:100%; border:0; border-top:1px solid #333">
-        
-        <div class="tower-card" onclick="selectTower('dart')">
-            <h4>Dart Monkey</h4>
-            <p>Cost: $200 | Range: 150</p>
-        </div>
-        <div class="tower-card" onclick="selectTower('ninja')">
-            <h4>Ninja Monkey</h4>
-            <p>Cost: $500 | Fast Attack</p>
-        </div>
-        <div class="tower-card" onclick="selectTower('super')">
-            <h4>Super Monkey</h4>
-            <p>Cost: $2500 | Extreme Speed</p>
-        </div>
+<div id="stats">CASH: $<span id="money">650</span> | LIVES: <span id="lives">100</span> | ROUND: <span id="round">1</span></div>
 
-        <button id="wave-btn" onclick="nextWave()">START NEXT WAVE</button>
-    </div>
+<div id="main-menu" class="menu-screen">
+    <div class="logo">BOON<span>SHOOTER</span></div>
+    <div style="color:var(--green); margin-bottom: 30px; letter-spacing: 5px;">OMNI-VERSION ACTIVATED</div>
+    <button class="btn" onclick="startGame()">START MISSION</button>
+    <button class="btn" onclick="toggleScreen('settings-menu')">SETTINGS</button>
+    <button class="btn" onclick="toggleScreen('shop-menu')">BALLOON SHOP</button>
+</div>
 
-    <div id="game-container">
-        <canvas id="canvas" width="800" height="600"></canvas>
-    </div>
+<div id="settings-menu" class="menu-screen" style="display:none;">
+    <h2>SYSTEM SETTINGS</h2>
+    <button class="btn" onclick="toggleTheme()">TOGGLE THEME (DARK/LIGHT)</button>
+    <button class="btn" onclick="toggleScreen('main-menu')">BACK</button>
+</div>
+
+<div id="shop-menu" class="menu-screen" style="display:none;">
+    <h2>BALLOON MARKET</h2>
+    <p>Buy premium balloons to increase cash per pop!</p>
+    <button class="btn" onclick="buyBalloonType('Gold', 500)">GOLD BALLOONS ($500)</button>
+    <button class="btn" onclick="buyBalloonType('Diamond', 2000)">DIAMOND BALLOONS ($2000)</button>
+    <button class="btn" onclick="toggleScreen('main-menu')">BACK</button>
+</div>
+
+<div id="sidebar" style="display:none;">
+    <h3 style="color:var(--blue)">ARMORY</h3>
+    <div id="tower-list"></div>
+</div>
+
+<canvas id="game"></canvas>
 
 <script>
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    
-    let money = 650;
-    let lives = 100;
-    let wave = 0;
-    let selectedTower = null;
-    let towers = [];
-    let enemies = [];
-    let bullets = [];
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    const path = [{x:0, y:3
+    let gameState = {
+        money: 650,
+        lives: 100,
+        round: 1,
+        active: false,
+        theme: 'dark',
+        multiplier: 1,
+        towers: [],
+        balloons: [],
+        bullets: []
+    };
+
+    const TOWER_TYPES = [
+        { name: "Dart", cost: 200, color: "#33BBFF", type: "dart", range: 150 },
+        { name: "Ice", cost: 350, color: "#A0E7FF", type: "ice", range: 120 },
+        { name: "Slime", cost: 400, color: "#32CD32", type: "slime", range: 100 },
+        { name: "Heli", cost: 1200, color: "#555", type: "heli", range: 300 },
+        { name: "Nuke", cost: 5000, color: "#FFD700", type: "nuke", range: 400 },
+        { name: "Time-Stop", cost: 8000, color: "#8A2BE2", type: "time", range: 1000 },
+        // ... adding logic for 20 slots
+    ];
+
+    function toggleScreen(id) {
+        document.querySelectorAll('.menu-screen').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'flex';
+    }
+
+    function toggleTheme() {
+        gameState.theme = gameState.theme === 'dark' ? 'light' : 'dark';
+        document.body.className = gameState.theme + '-theme';
+    }
+
+    function buyBalloonType(type, cost) {
+        if(gameState.money >= cost) {
+            gameState.money -= cost;
+            gameState.multiplier += (type === 'Gold' ? 0.5 : 1.5);
+            updateUI();
+            alert(type + " Balloons active! Cash flow increased.");
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('money').innerText = Math.floor(gameState.money);
+        document.getElementById('lives').innerText = gameState.lives;
+        document.getElementById('round').innerText = gameState.round;
+    }
+
+    function startGame() {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('sidebar').style.display = 'block';
+        gameState.active = true;
+        renderTowers();
+        gameLoop();
+    }
+
+    function renderTowers() {
+        const list = document.getElementById('tower-list');
+        list.innerHTML = "";
+        TOWER_TYPES.forEach(t => {
+            list.innerHTML += `
+                <div class="tower-card" onclick="selectTower('${t.type}')">
+                    <div style="width:20px; height:20px; background:${t.color}; border-radius:50%"></div>
+                    <div><b>${t.name}</b><br><small>$${t.cost}</small></div>
+                </div>
+            `;
+        });
+    }
+
+    let selectedTower = null;
+    function selectTower(type) {
+        selectedTower = TOWER_TYPES.find(t => t.type === type);
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(!selectedTower || gameState.money < selectedTower.cost) return;
+        
+        gameState.towers.push({
+            x: e.clientX,
+            y: e.clientY,
+            ...selectedTower,
+            lastShot: 0
+        });
+        gameState.money -= selectedTower.cost;
+        updateUI();
+    });
+
+    function drawAvatar(ctx, x, y, type, color) {
+        ctx.fillStyle = color;
+        if(type === 'heli') {
+            ctx.fillRect(x-15, y-5, 30, 10); // Body
+            ctx.beginPath();
+            ctx.strokeStyle = "#fff";
+            ctx.moveTo(x-20, y); ctx.lineTo(x+20, y); // Blades
+            ctx.stroke();
+        } else if(type === 'nuke') {
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, Math.PI*2);
+            ctx.fill();
+            ctx.strokeStyle = "red";
+            ctx.strokeRect(x-18, y-18, 36, 36);
+        } else {
+            ctx.beginPath();
+            ctx.arc(x, y, 12, 0, Math.PI*2);
+            ctx.fill();
+            // Add a little "visor" to make them unique avatars
+            ctx.fillStyle = "#000";
+            ctx.fillRect(x+2, y-5, 8, 4);
+        }
+    }
+
+    function gameLoop() {
+        if(!gameState.active) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Spawn logic
+        if(Math.random() < 0.02) {
+            gameState.balloons.push({ x: 0, y: canvas.height/2, hp: gameState.round, speed: 2 });
+        }
+
+        // Draw Balloons
+        gameState.balloons.forEach((b, i) => {
+            b.x += b.speed;
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, 15, 0, Math.PI*2);
+            ctx.fill();
+
+            if(b.x > canvas.width) {
+                gameState.lives--;
+                gameState.balloons.splice(i, 1);
+                updateUI();
+            }
+        });
+
+        // Draw Towers & Shoot
+        gameState.towers.forEach(t => {
+            drawAvatar(ctx, t.x, t.y, t.type, t.color);
+            
+            // Shooting logic
+            let now = Date.now();
+            if(now - t.lastShot > 1000) {
+                gameState.balloons.forEach((b, bi) => {
+                    let dist = Math.hypot(t.x - b.x, t.y - b.y);
+                    if(dist < t.range) {
+                        b.hp--;
+                        if(b.hp <= 0) {
+                            gameState.balloons.splice(bi, 1);
+                            gameState.money += 20 * gameState.multiplier;
+                            updateUI();
+                        }
+                        t.lastShot = now;
+                    }
+                });
+            }
+        });
+
+        requestAnimationFrame(gameLoop);
+    }
+</script>
+</body>
+</html>
