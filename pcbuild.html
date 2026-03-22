@@ -2,153 +2,157 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PC_TYCOON // REPLICA</title>
+    <title>PC_TYCOON // REAL_SIM</title>
     <style>
-        :root { --wall: #e2e8f0; --floor: #94a3b8; --accent: #3b82f6; --neon: #00f2ff; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #000; overflow: hidden; color: white; }
-
-        /* VIEWPORT (THE ROOM) */
-        #game-container { width: 100vw; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b 0%, #020617 100%); }
-
-        /* PHYSICAL STATIONS (REPLICA OF TYCOON TILES) */
-        .station { position: absolute; border: 4px solid rgba(255,255,255,0.1); border-radius: 10px; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); width: 80%; height: 70%; }
-        .active-station { display: flex; }
-
-        /* NAVIGATION BUTTONS (WALKING AROUND THE SHOP) */
-        .nav-controls { position: absolute; bottom: 30px; display: flex; gap: 20px; z-index: 1000; }
-        .walk-btn { background: #fff; color: #000; border: none; padding: 15px 25px; font-weight: 900; cursor: pointer; border-radius: 5px; text-transform: uppercase; font-size: 12px; }
-        .walk-btn:hover { background: var(--accent); color: white; }
-
-        /* STATION 1: PARTS SHELF */
-        .shelf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; }
-        .part-item { background: #1e293b; border: 2px solid #334155; padding: 20px; text-align: center; border-radius: 8px; }
-
-        /* STATION 2: WORKBENCH (THE WIRE PART) */
-        #workbench-ui { position: relative; width: 600px; height: 450px; background: #000; border: 2px solid #334155; }
-        .port { position: absolute; width: 22px; height: 22px; background: #111; border: 2px solid #444; cursor: pointer; z-index: 100; border-radius: 3px; }
-        .port:hover { border-color: var(--neon); box-shadow: 0 0 10px var(--neon); }
-        .connected { background: var(--neon) !important; box-shadow: 0 0 20px var(--neon); border-color: white !important; }
-        canvas { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+        :root { --grass: #348232; --road: #334155; --shop: #1e293b; --player: #38bdf8; }
+        body { margin: 0; background: var(--grass); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
 
         /* HUD */
-        #hud { position: absolute; top: 0; width: 100%; padding: 25px; display: flex; justify-content: space-between; box-sizing: border-box; }
-        .money-tag { font-size: 24px; font-weight: 900; color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.3); }
-        .inv-tag { font-size: 12px; color: #64748b; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; }
+        #hud { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.9); padding: 15px 25px; border-radius: 12px; z-index: 1000; border: 2px solid #444; }
+        .money { color: #4ade80; font-weight: 900; font-size: 24px; text-shadow: 0 0 10px rgba(74,222,128,0.3); }
+
+        /* WORLD MAP */
+        #world { width: 100vw; height: 100vh; position: relative; background: radial-gradient(circle, #45a043 0%, #2d5a27 100%); }
+        .road { position: absolute; top: 50%; left: 0; width: 100%; height: 120px; background: var(--road); transform: translateY(-50%); border-top: 5px solid #444; border-bottom: 5px solid #444; }
+
+        .building { position: absolute; width: 320px; height: 260px; border: 8px solid #111; border-radius: 4px; box-shadow: 0 20px 0 #000; }
+        #my-shop { left: 80px; top: 40px; background: #2d3748; }
+        #tech-mart { right: 80px; top: 40px; background: #cbd5e1; color: #111; }
+
+        /* ANIMATED CHARACTER */
+        #player { 
+            position: absolute; width: 48px; height: 64px; 
+            top: 450px; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 500; transition: transform 0.1s;
+        }
+        .character-body { width: 100%; height: 100%; position: relative; }
+        .head { width: 24px; height: 24px; background: #ffdbac; border-radius: 50%; position: absolute; top: 0; left: 12px; border: 2px solid #000; }
+        .torso { width: 32px; height: 30px; background: var(--player); border-radius: 4px; position: absolute; top: 22px; left: 8px; border: 2px solid #000; }
+        .leg { width: 10px; height: 14px; background: #1e293b; position: absolute; bottom: 0; border: 2px solid #000; }
+        .leg.left { left: 8px; } .leg.right { right: 8px; }
+        
+        /* WALKING ANIMATION */
+        .walking .leg.left { animation: walk 0.2s infinite alternate; }
+        .walking .leg.right { animation: walk 0.2s infinite alternate-reverse; }
+        @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
+        /* WIRING ZOOM */
+        #wiring-ui { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.98); 
+            display: none; align-items: center; justify-content: center; z-index: 2000; 
+        }
+        #case { width: 450px; height: 500px; background: #0a0a0f; border: 4px solid #334155; position: relative; box-shadow: 0 0 50px #000; }
+        .port { position: absolute; width: 30px; height: 30px; background: #1a1a2e; border: 2px solid #444; cursor: pointer; border-radius: 4px; z-index: 100; }
+        .port.connected { background: #00ff88; box-shadow: 0 0 20px #00ff88; border-color: white; }
+        canvas { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="hud">
-        <div class="money-tag">💰 $<span id="cash">500</span></div>
-        <div class="inv-tag">STORAGE: <span id="storage-list">Empty</span></div>
+<div id="hud">
+    <div class="money">$<span id="cash">750</span></div>
+    <div id="status" style="font-size: 11px; color: #94a3b8; margin-top: 5px; text-transform: uppercase; font-weight: bold;">Mission: Go to Tech-Mart</div>
+</div>
+
+<div id="world">
+    <div class="road"></div>
+    <div id="my-shop" class="building"><div style="padding:20px; font-weight:900;">CUSTOM REPAIRS</div></div>
+    <div id="tech-mart" class="building">
+        <div style="padding:20px; font-weight:900; text-align:right;">WHOLESALE PARTS</div>
+        <button onclick="buyBox()" style="position:absolute; bottom:20px; right:20px; padding:15px; background:#ef4444; color:white; border:none; font-weight:bold; cursor:pointer; border-radius:5px;">BUY PC BOX ($400)</button>
     </div>
 
-    <section id="station-shelf" class="station active-station">
-        <h1 style="margin-bottom: 30px; letter-spacing: 5px;">COMPONENTS_SHELF</h1>
-        <div class="shelf-grid">
-            <div class="part-item"><h4>i5 CPU</h4><p>$150</p><button class="walk-btn" onclick="buy('cpu', 150)">Take Part</button></div>
-            <div class="part-item"><h4>B550 Mobo</h4><p>$200</p><button class="walk-btn" onclick="buy('mobo', 200)">Take Part</button></div>
-            <div class="part-item"><h4>Cables</h4><p>$40</p><button class="walk-btn" onclick="buy('wires', 40)">Take Part</button></div>
+    <div id="player">
+        <div class="character-body">
+            <div class="head"></div>
+            <div class="torso"></div>
+            <div class="leg left"></div>
+            <div class="leg right"></div>
+            <div id="handheld" style="display:none; position:absolute; top:10px; left:10px; font-size:24px;">📦</div>
         </div>
-    </section>
+    </div>
+</div>
 
-    <section id="station-build" class="station">
-        <h1 style="margin-bottom: 20px;">WORKBENCH_V1</h1>
-        <div id="workbench-ui">
-            <canvas id="wire-canvas" width="600" height="450"></canvas>
-            <div id="p-psu" class="port" style="bottom: 30px; left: 30px;"></div>
-            <div id="p-mb" class="port" style="top: 150px; right: 30px; height: 100px;"></div>
-            <div id="p-cpu" class="port" style="top: 30px; left: 150px; width: 40px; height: 40px;"></div>
+<div id="wiring-ui">
+    <div style="text-align:center;">
+        <h2 style="color:var(--player); letter-spacing:5px;">WIRING STAGE</h2>
+        <div id="case">
+            <canvas id="wire-canvas" width="450" height="500"></canvas>
+            <div id="p-psu" class="port" style="bottom: 40px; left: 40px;">PSU</div>
+            <div id="p-mobo" class="port" style="top: 120px; right: 40px; height: 120px;">MOBO</div>
         </div>
-        <p style="font-size: 11px; color: #444; margin-top: 10px;">Click PSU then click a component to route wires.</p>
-    </section>
-
-    <section id="station-sell" class="station">
-        <h1 style="color: var(--neon);">SELL_STATION</h1>
-        <p id="sell-status">PC NOT READY. COMPLETE WIRING FIRST.</p>
-        <button id="sell-btn" class="walk-btn" style="display:none; background: var(--neon);" onclick="sellPC()">SELL FOR $1,200</button>
-    </section>
-
-    <div class="nav-controls">
-        <button class="walk-btn" onclick="walkTo('station-shelf')">⬅ Walk to Shelf</button>
-        <button class="walk-btn" onclick="walkTo('station-build')">⬆ Walk to Workbench</button>
-        <button class="walk-btn" onclick="walkTo('station-sell')">➡ Walk to Counter</button>
+        <button onclick="sellBuild()" style="margin-top: 30px; padding: 15px 50px; background: #00ff88; color: #000; border: none; font-weight: 900; cursor: pointer; border-radius: 5px;">COMPLETE & SELL PC</button>
     </div>
 </div>
 
 <script>
-    let player = { cash: 500, inv: [], connections: 0, activePort: null };
-    const canvas = document.getElementById('wire-canvas');
-    const ctx = canvas.getContext('2d');
+    let g = { x: window.innerWidth/2, y: 500, cash: 750, hasBox: false, conn: 0, activeP: null };
+    const p = document.getElementById('player');
+    const cvs = document.getElementById('wire-canvas');
+    const ctx = cvs.getContext('2d');
 
-    function walkTo(id) {
-        document.querySelectorAll('.station').forEach(s => s.classList.remove('active-station'));
-        document.getElementById(id).classList.add('active-station');
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.key] = true; p.classList.add('walking'); });
+    window.addEventListener('keyup', e => { keys[e.key] = false; p.classList.remove('walking'); });
+
+    function update() {
+        if (keys['ArrowUp'] || keys['w']) g.y -= 6;
+        if (keys['ArrowDown'] || keys['s']) g.y += 6;
+        if (keys['ArrowLeft'] || keys['a']) { g.x -= 6; p.style.transform = 'translate(-50%, -50%) scaleX(-1)'; }
+        if (keys['ArrowRight'] || keys['d']) { g.x += 6; p.style.transform = 'translate(-50%, -50%) scaleX(1)'; }
+
+        p.style.top = g.y + 'px';
+        p.style.left = g.x + 'px';
+
+        // Check Building Entry
+        if(g.y < 300) {
+            if(g.x < 400 && g.hasBox) { document.getElementById('wiring-ui').style.display = 'flex'; }
+        }
+        requestAnimationFrame(update);
     }
+    update();
 
-    function buy(item, cost) {
-        if(player.cash >= cost && !player.inv.includes(item)) {
-            player.cash -= cost;
-            player.inv.push(item);
-            updateHUD();
-        } else if(player.inv.includes(item)) {
-            alert("Already in inventory!");
-        } else {
-            alert("Not enough cash! Sell a PC first.");
+    function buyBox() {
+        if(g.cash >= 400 && !g.hasBox) {
+            g.cash -= 400;
+            g.hasBox = true;
+            document.getElementById('cash').innerText = g.cash;
+            document.getElementById('handheld').style.display = 'block';
+            document.getElementById('status').innerText = "Mission: Enter Workshop";
         }
     }
 
-    function updateHUD() {
-        document.getElementById('cash').innerText = player.cash;
-        document.getElementById('storage-list').innerText = player.inv.join(', ').toUpperCase() || 'Empty';
-    }
-
-    document.querySelectorAll('.port').forEach(p => {
-        p.onclick = () => {
-            if(!player.inv.includes('wires')) return alert("Pick up 'Cables' from the shelf first!");
-            if(!player.inv.includes('mobo')) return alert("Place a 'Mobo' from the shelf first!");
-
-            if(p.id === 'p-psu') {
-                player.activePort = p;
-                p.style.borderColor = 'var(--neon)';
-            } else if(player.activePort) {
-                drawWire(player.activePort, p);
-                player.activePort = null;
-            }
+    document.querySelectorAll('.port').forEach(port => {
+        port.onclick = () => {
+            if (port.id === 'p-psu') { g.activeP = port; port.style.borderColor = 'cyan'; } 
+            else if (g.activeP) { connect(g.activeP, port); g.activeP = null; }
         };
     });
 
-    function drawWire(s, e) {
-        if(e.classList.contains('connected')) return;
+    function connect(s, e) {
+        if (e.classList.contains('connected')) return;
         e.classList.add('connected');
-        player.connections++;
-
-        const sX = s.offsetLeft + s.offsetWidth/2;
-        const sY = s.offsetTop + s.offsetHeight/2;
-        const eX = e.offsetLeft + e.offsetWidth/2;
-        const eY = e.offsetTop + e.offsetHeight/2;
-
-        ctx.strokeStyle = '#222'; ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.moveTo(sX, sY);
-        ctx.bezierCurveTo(sX, eY+80, eX, eY+80, eX, eY); ctx.stroke();
-
-        if(player.connections >= 2) {
-            document.getElementById('sell-btn').style.display = 'block';
-            document.getElementById('sell-status').innerText = "PC IS FUNCTIONAL. READY TO PROFIT.";
-        }
+        g.conn++;
+        
+        ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(55, 455);
+        ctx.bezierCurveTo(55, 200, 400, 400, 410, 180);
+        ctx.stroke();
     }
 
-    function sellPC() {
-        player.cash += 1200;
-        player.inv = [];
-        player.connections = 0;
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        document.querySelectorAll('.port').forEach(p => p.classList.remove('connected'));
-        document.getElementById('sell-btn').style.display = 'none';
-        document.getElementById('sell-status').innerText = "PC SOLD. ORDER NEW PARTS.";
-        updateHUD();
-        walkTo('station-shelf');
+    function sellBuild() {
+        if(g.conn > 0) {
+            g.cash += 1200;
+            g.hasBox = false; g.conn = 0;
+            ctx.clearRect(0,0,450,500);
+            document.getElementById('cash').innerText = g.cash;
+            document.getElementById('wiring-ui').style.display = 'none';
+            document.getElementById('handheld').style.display = 'none';
+            document.getElementById('status').innerText = "Mission: Buy more parts";
+            g.y = 350; // Exit shop
+            document.querySelectorAll('.port').forEach(pt => pt.classList.remove('connected'));
+        }
     }
 </script>
 </body>
