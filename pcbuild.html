@@ -2,93 +2,125 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PC_TYCOON // THE_WORKSHOP</title>
+    <title>PC_BUILDER // NEON_FACTORY_v20</title>
     <style>
-        :root { --grass: #348232; --road: #334155; --floor: #1e293b; --player: #38bdf8; --money: #4ade80; }
-        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
+        :root { --bg: #000; --panel: #111; --grass: #1a1a2e; --neon-cyan: #00f2ff; --neon-magenta: #ff00ff; --neon-green: #00ff88; --neon-red: #ff3333; --neon-gold: #fbbf24; --text: #eee; --shop-ext: #1e293b; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
 
-        /* CAMERA SYSTEM */
-        #viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; transition: 0.5s ease-in-out; }
-
-        /* WORLD MAP (OUTSIDE) */
-        #outside { width: 100vw; height: 100vh; background: var(--grass); position: absolute; }
-        .road { position: absolute; top: 50%; width: 100%; height: 100px; background: var(--road); transform: translateY(-50%); }
+        /* THE WORLD VIEWS */
+        #viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+        #outside { width: 100vw; height: 100vh; background: var(--grass); position: absolute; transition: 0.5s; background-image: radial-gradient(#2d3748 1px, transparent 1px); background-size: 80px 80px;}
+        .road { position: absolute; top: 50%; width: 100%; height: 140px; background: #334155; transform: translateY(-50%); border-top: 5px solid #222; border-bottom: 5px solid #222;}
         
-        /* BUILDINGS */
-        .building-ext { position: absolute; width: 250px; height: 200px; border: 6px solid #111; display: flex; align-items: center; justify-content: center; font-weight: 900; }
-        #shop-ext { left: 100px; top: 50px; background: #2d3748; border-color: var(--player); }
-        #mart-ext { right: 100px; top: 50px; background: #cbd5e1; color: #111; }
+        /* BUILDINGS EX EXTERIOR */
+        .building-ext { position: absolute; width: 320px; height: 260px; border: 8px solid #000; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; border-radius: 4px;}
+        #factory-ext { left: 80px; top: 40px; background: #2d3748; border-color: var(--neon-cyan); box-shadow: 0 0 50px rgba(0,242,255,0.2); }
+        #mart-ext { right: 80px; top: 40px; background: #f8fafc; color: #111; border-color: var(--neon-red); box-shadow: 0 0 50px rgba(255,51,51,0.2); }
 
-        /* THE WORKSHOP (INTERIOR) */
-        #interior { 
-            width: 100vw; height: 100vh; background: #111; 
-            position: absolute; top: 100%; transition: 0.5s; 
-            display: flex; align-items: center; justify-content: center;
-        }
-        .inside-room { 
-            width: 80%; height: 80%; background: var(--floor); border: 10px solid #334155; 
-            position: relative; background-image: radial-gradient(#2d3748 1px, transparent 1px); background-size: 40px 40px;
-        }
-        .table { width: 150px; height: 100px; background: #475569; border: 4px solid #000; position: absolute; top: 50px; left: 50px; }
+        /* NEON FACTORY INTERIOR */
+        #interior { width: 100vw; height: 100vh; background: #000; position: absolute; top: 100%; transition: 0.6s cubic-bezier(0.6, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; }
+        
+        #room { width: 95%; height: 90%; background: #050505; border: 12px solid #222; position: relative; transition: box-shadow 0.2s; }
+        
+        /* THE RGB FLOOR LIGHTS (ACTIVE CLASS) */
+        #room::before { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 100px var(--neon-cyan); transition: 0.5s; }
+        #room.incoming::before { box-shadow: inset 0 0 100px var(--neon-red); }
+        #room.profit::before { box-shadow: inset 0 0 100px var(--neon-green); }
 
-        /* THE PLAYER */
-        #player { 
-            position: absolute; width: 44px; height: 60px; 
-            top: 500px; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 1000;
-        }
-        .char { width: 30px; height: 40px; background: var(--player); border: 3px solid #000; margin: 20px auto 0; border-radius: 4px; position: relative; }
-        .head { width: 24px; height: 24px; background: #ffdbac; border: 3px solid #000; position: absolute; top: -18px; left: 0; border-radius: 4px; }
-        .item-box { display: none; position: absolute; top: -30px; left: 5px; font-size: 20px; }
+        /* WORK STATIONS */
+        .station { position: absolute; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; text-align: center; }
+        #build-bench { width: 200px; height: 120px; background: #111; border: 4px solid var(--neon-cyan); left: 60px; top: 60px; box-shadow: 0 0 30px rgba(0,242,255,0.2); }
+        #paint-station { width: 120px; height: 120px; background: #111; border: 4px solid var(--neon-magenta); left: 60px; bottom: 120px; cursor: pointer; box-shadow: 0 0 30px rgba(255,0,255,0.2); }
+        
+        /* TIERED PRODUCT SHELVES */
+        #product-shelves { width: 350px; height: 280px; background: #000; border: 4px solid var(--neon-cyan); right: 60px; top: 60px; display: flex; flex-direction: column; justify-content: space-around; padding: 20px; box-shadow: 0 0 50px rgba(0,242,255,0.2); }
+        .shelf-niche { width: 100%; height: 80px; border-bottom: 2px solid #333; position: relative; display: flex; align-items: center; justify-content: center;}
+        .shelf-box { width: 60px; height: 60px; border: 2px solid #000; display: none; background: cyan;} /* Dynamically colored */
+        .shelf-spotlight { position: absolute; top: -10px; width: 60px; height: 60px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 100%);}
 
-        /* WIRING UI */
-        #wire-gui { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5000; }
-        #pc-case { width: 400px; height: 450px; background: #000; border: 2px solid #333; position: relative; }
-        .port { position: absolute; width: 25px; height: 25px; background: #111; border: 1px solid #444; }
-        .connected { background: var(--money) !important; box-shadow: 0 0 15px var(--money); }
+        /* CHARACTER */
+        #player { position: absolute; width: 44px; height: 60px; top: 480px; left: 50%; transform: translate(-50%, -50%); z-index: 1000; }
+        .char { width: 32px; height: 42px; background: var(--player); border: 3px solid #000; margin: 18px auto 0; border-radius: 4px; position: relative; }
+        .head { width: 24px; height: 24px; background: #ffdbac; border: 3px solid #000; position: absolute; top: -18px; left: 1px; border-radius: 4px; }
+        #hand-box { display: none; position: absolute; top: -35px; left: 5px; font-size: 24px; color: cyan; text-shadow: 0 0 10px; }
+
+        /* CUSTOM MODS UI */
+        #mod-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 10000; border: 4px solid var(--neon-magenta); }
+        #wiring-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 9999; border: 4px solid var(--neon-cyan); }
+        #pc-area { width: 450px; height: 500px; background: #050505; border: 2px solid #333; position: relative; }
+        .port { position: absolute; width: 28px; height: 28px; background: #111; border: 2px solid #444; border-radius: 4px; }
+        .connected { background: var(--neon-green) !important; box-shadow: 0 0 20px var(--neon-green); border-color: white;}
+        canvas { position: absolute; inset: 0; pointer-events: none; }
 
         /* HUD */
-        #hud { position: fixed; top: 20px; left: 20px; background: #000; padding: 10px 20px; border: 2px solid #333; z-index: 9000; }
+        #hud { position: fixed; top: 20px; left: 20px; background: #000; padding: 12px 30px; border: 2px solid #444; z-index: 8000; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5);}
+        .money { color: var(--neon-green); font-size: 24px; font-weight: 900; }
     </style>
 </head>
 <body>
 
-<div id="hud">CASH: <span style="color:var(--money)">$<span id="cash">1000</span></span></div>
+<div id="hud">
+    <div class="money">$<span id="cash">1500</span></div>
+    <div id="status" style="font-size: 10px; color: #666; margin-top: 5px; text-transform: uppercase; font-weight: bold;">MISSION: Go to Tech-Mart for Raw parts</div>
+</div>
 
 <div id="viewport">
     <div id="outside">
         <div class="road"></div>
-        <div id="shop-ext" class="building-ext">MY WORKSHOP<br><small>(WALK IN)</small></div>
-        <div id="mart-ext" class="building-ext">TECH-MART<br><button onclick="buyPart()">BUY $400</button></div>
+        <div id="factory-ext" class="building-ext">CUSTOM_PC_FACTORY<br><small style="font-weight:100;">(BUILD INSIDE)</small></div>
+        <div id="mart-ext" class="building-ext">TECH-MART<br><button onclick="buyPart()" style="margin-top:10px; cursor:pointer; padding:10px 20px; background:var(--neon-red); color:#000; border:none; font-weight:900;">BUY RAW BOX ($400)</button></div>
     </div>
 
     <div id="interior">
-        <div class="inside-room">
-            <div class="table" id="build-trigger">BUILD TABLE</div>
-            <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#666;">WALK DOWN TO EXIT</div>
+        <div id="room">
+            <div id="paint-station" class="station">CASE PAINTER<br><small>(DROP BOX TO MOD)</small></div>
+            <div id="build-bench" class="station">BUILD BENCH<br><small>(CONNECT WIRES)</small></div>
+            <div id="product-shelves">
+                <div class="shelf-niche"><div class="shelf-spotlight"></div><div id="sb1" class="shelf-box"></div></div>
+                <div class="shelf-niche"><div class="shelf-spotlight"></div><div id="sb2" class="shelf-box"></div></div>
+                <div class="shelf-niche"><div class="shelf-spotlight"></div><div id="sb3" class="shelf-box"></div></div>
+            </div>
+            <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.1); font-size:10px;">WALK DOWN TO EXIT FACTORY</div>
         </div>
     </div>
 
     <div id="player">
-        <div class="char"><div class="head"></div><div id="box" class="item-box">📦</div></div>
+        <div class="char"><div class="head"></div><div id="hand-box" class="hand-box">📦</div></div>
     </div>
 </div>
 
-<div id="wire-gui">
-    <h2>WIRING PC...</h2>
-    <div id="pc-case">
-        <canvas id="c" width="400" height="450" style="position:absolute;"></canvas>
-        <div id="p-psu" class="port" style="bottom:20px; left:20px;"></div>
-        <div id="p-mb" class="port" style="top:100px; right:20px; height:100px;"></div>
+<div id="mod-panel">
+    <div style="text-align:center;">
+        <h1 style="color:var(--neon-magenta); letter-spacing:5px;">CASE_MOD_v1</h1>
+        <div id="swatch" style="width:200px; height:200px; background:cyan; border:4px solid #fff; margin:20px auto;"></div>
+        <div style="margin-top:20px;">
+            <input type="color" id="color-input" value="#00ffff" style="width:200px; height:40px; cursor:pointer;" onchange="updateSwatch()">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button onclick="modPC()" style="flex:1; padding:15px; background:var(--neon-magenta); color:white; font-weight:bold; cursor:pointer;">APPLY PAINT</button>
+            <button onclick="closeMod()" style="flex:1; padding:15px; background:#333; color:white; border:none; cursor:pointer;">CANCEL</button>
+        </div>
     </div>
-    <button onclick="finishBuild()" style="margin-top:20px; padding:10px 40px; background:var(--money); border:none; font-weight:bold; cursor:pointer;">SELL PC ($1200)</button>
+</div>
+
+<div id="wiring-panel">
+    <div style="text-align:center;">
+        <h2 style="letter-spacing:4px; color:var(--neon-cyan);">WIRING STAGE</h2>
+        <div id="pc-area">
+            <canvas id="wire-canvas" width="450" height="500" style="position:absolute;"></canvas>
+            <div id="p-psu" class="port" style="bottom:30px; left:30px;">PSU</div>
+            <div id="p-mb" class="port" style="top:120px; right:30px; height:120px;">MOBO</div>
+        </div>
+        <button onclick="finishBuild()" style="margin-top:30px; padding:15px 60px; background:var(--neon-green); color:#000; border:none; font-weight:900; cursor:pointer;">COMPLETE & STOCK</button>
+    </div>
 </div>
 
 <script>
-    let g = { x: window.innerWidth/2, y: 450, cash: 1000, hasBox: false, mode: 'outside', connections: 0, activeP: null };
-    const p = document.getElementById('player');
-    const view = document.getElementById('interior');
-    const cvs = document.getElementById('c');
+    let g = { x: window.innerWidth/2, y: 480, cash: 1500, hasRaw: false, builtColor: null, stock: 0, mode: 'outside', conns: 0, activeP: null };
+    const pEl = document.getElementById('player');
+    const roomEl = document.getElementById('room');
+    const intView = document.getElementById('interior');
+    const cvs = document.getElementById('wire-canvas');
     const ctx = cvs.getContext('2d');
 
     const keys = {};
@@ -96,68 +128,123 @@
     window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
     function loop() {
-        const s = 6;
-        if(keys['w'] || keys['arrowup']) g.y -= s;
-        if(keys['s'] || keys['arrowdown']) g.y += s;
-        if(keys['a'] || keys['arrowleft']) g.x -= s;
-        if(keys['d'] || keys['arrowright']) g.x += s;
+        const speed = 7;
+        if(keys['w'] || keys['arrowup']) g.y -= speed;
+        if(keys['s'] || keys['arrowdown']) g.y += speed;
+        if(keys['a'] || keys['arrowleft']) g.x -= speed;
+        if(keys['d'] || keys['arrowright']) g.x += speed;
 
-        p.style.left = g.x + 'px';
-        p.style.top = g.y + 'px';
+        pEl.style.left = g.x + 'px';
+        pEl.style.top = g.y + 'px';
 
-        checkLogic();
+        logic();
         requestAnimationFrame(loop);
     }
     loop();
 
     function buyPart() {
-        if(g.cash >= 400 && !g.hasBox) {
-            g.cash -= 400; g.hasBox = true;
+        if(g.cash >= 400 && !g.hasRaw) {
+            g.cash -= 400; g.hasRaw = true;
             document.getElementById('cash').innerText = g.cash;
-            document.getElementById('box').style.display = 'block';
+            document.getElementById('hand-box').style.display = 'block';
+            document.getElementById('hand-box').style.color = '#fff'; // Raw color
+            document.getElementById('status').innerText = "CARRY RAW BOX TO FACTORY";
+            roomEl.classList.add('incoming'); // Floor red
         }
     }
 
-    function checkLogic() {
-        // ENTER SHOP
-        if(g.mode === 'outside' && g.x < 350 && g.y < 250) {
+    function updateSwatch() {
+        document.getElementById('swatch').style.backgroundColor = document.getElementById('color-input').value;
+    }
+
+    function modPC() {
+        const c = document.getElementById('color-input').value;
+        g.builtColor = c;
+        document.getElementById('hand-box').style.color = c; // Custom paint!
+        document.getElementById('swatch').style.backgroundColor = c;
+        closeMod();
+        document.getElementById('status').innerText = "NOW CARRY BOX TO BUILD BENCH";
+    }
+
+    function closeMod() { document.getElementById('mod-panel').style.display = 'none'; }
+    function closeWires() { document.getElementById('wiring-panel').style.display = 'none'; }
+
+    function logic() {
+        // TRANSITION: OUTSIDE -> INSIDE
+        if(g.mode === 'outside' && g.x < 360 && g.y < 280) {
             g.mode = 'inside';
-            view.style.top = '0';
-            g.y = 500; // Reset pos to bottom of room
+            intView.style.top = '0';
+            g.y = 580; // Reset pos at door
         }
-        // EXIT SHOP
-        if(g.mode === 'inside' && g.y > 550) {
+        // TRANSITION: INSIDE -> OUTSIDE
+        if(g.mode === 'inside' && g.y > 630) {
             g.mode = 'outside';
-            view.style.top = '100%';
+            intView.style.top = '100%';
             g.y = 350;
+            roomEl.classList.remove('incoming');
         }
-        // TRIGGER BUILD
-        if(g.mode === 'inside' && g.x < 250 && g.y < 200 && g.hasBox) {
-            document.getElementById('wire-gui').style.display = 'flex';
+        // CASE MOD TRIGGER (Magenta Station)
+        if(g.mode === 'inside' && g.x < 200 && g.y > 400 && g.hasRaw) {
+            document.getElementById('mod-panel').style.display = 'flex';
+        }
+        // BUILD BENCH TRIGGER (Cyan Station)
+        if(g.mode === 'inside' && g.x < 300 && g.y < 220 && g.hasRaw && g.builtColor) {
+            document.getElementById('wiring-panel').style.display = 'flex';
+        }
+        // SELL TRIGGER (Shelves)
+        if(g.mode === 'inside' && g.x > window.innerWidth - 450 && g.y < 350 && g.stock > 0) {
+            sellProduct();
         }
     }
 
-    // WIRING
+    // WIRING (Simplified draw with custom paint)
     document.querySelectorAll('.port').forEach(pt => {
         pt.onclick = () => {
             if(pt.id === 'p-psu') g.activeP = pt;
             else if(g.activeP) {
-                pt.classList.add('connected'); g.connections++;
-                ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 6;
-                ctx.beginPath(); ctx.moveTo(32, 412); ctx.lineTo(378, 150); ctx.stroke();
+                pt.classList.add('connected'); g.conns++;
+                ctx.strokeStyle = g.builtColor || '#fff'; ctx.lineWidth = 6;
+                ctx.beginPath(); ctx.moveTo(40, 440); ctx.lineTo(410, 180); ctx.stroke();
             }
         };
     });
 
     function finishBuild() {
-        if(g.connections > 0) {
-            g.cash += 1200; g.hasBox = false; g.connections = 0;
-            document.getElementById('cash').innerText = g.cash;
-            document.getElementById('wire-gui').style.display = 'none';
-            document.getElementById('box').style.display = 'none';
-            ctx.clearRect(0,0,400,450);
+        if(g.conns > 0) {
+            // STOCK THE SHELVES
+            g.stock++;
+            g.hasRaw = false; g.conns = 0; g.activeP = null;
+            document.getElementById('sb'+g.stock).style.display = 'block';
+            document.getElementById('sb'+g.stock).style.backgroundColor = g.builtColor; // Custom painted stocked box!
+            
+            // CLEAN WIRING GUI
+            ctx.clearRect(0,0,450,500);
             document.querySelectorAll('.port').forEach(pt => pt.classList.remove('connected'));
+            document.getElementById('wiring-panel').style.display = 'none';
+            document.getElementById('hand-box').style.display = 'none';
+            
+            // REACTION
+            roomEl.classList.remove('incoming');
+            roomEl.classList.add('profit');
+            document.getElementById('status').innerText = "PC STOCKED. WALK TO SHELVES TO SELL ALL";
+            setTimeout(() => roomEl.classList.remove('profit'), 500);
         }
+    }
+
+    function sellProduct() {
+        const total = g.stock * 1500; // Profit + Paint multiplier
+        g.cash += total;
+        // Payout reaction
+        roomEl.classList.add('profit');
+        setTimeout(() => roomEl.classList.remove('profit'), 500);
+
+        // CLEAR STOCK
+        g.stock = 0;
+        g.builtColor = null;
+        for(let i=1; i<=3; i++) { document.getElementById('sb'+i).style.display = 'none'; }
+        document.getElementById('cash').innerText = g.cash;
+        document.getElementById('status').innerText = "GO TO TECH-MART FOR Raw parts";
+        alert("Stock Sold: $" + total);
     }
 </script>
 </body>
