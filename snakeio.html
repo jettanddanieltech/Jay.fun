@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SNAKE_IO // PERMANENT_ECONOMY</title>
+    <style>
+        :root { --bg: #000; --blue: #33BBFF; --green: #00FF41; --panel: #0a0a0a; --text: #fff; --gold: #FFD700; --red: #ff3131; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+
+        /* OMNI UI SYSTEM */
+        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; transition: 0.5s; text-align: center; }
+        .logo { font-size: 50px; font-weight: 900; color: var(--blue); text-shadow: 0 0 20px rgba(51, 187, 255, 0.3); margin-bottom: 5px; letter-spacing: -3px; }
+        
+        .menu-card { background: var(--panel); border: 1px solid #111; padding: 25px; border-radius: 24px; width: 360px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        
+        .btn { background: var(--panel); border: 1px solid var(--blue); color: var(--blue); padding: 12px 0; border-radius: 50px; cursor: pointer; font-weight: bold; margin: 6px 0; width: 100%; transition: 0.2s; text-transform: uppercase; font-size: 11px; }
+        .btn:hover:not(:disabled) { background: var(--blue); color: #000; box-shadow: 0 0 20px var(--blue); }
+        .btn.secondary { border-color: #333; color: #666; }
+        
+        .wallet-ui { color: var(--green); font-family: monospace; margin-bottom: 15px; font-size: 14px; letter-spacing: 1px; }
+
+        #hud { position: absolute; top: 20px; width: 90%; display: flex; justify-content: space-between; font-family: monospace; color: var(--green); opacity: 0; z-index: 50; pointer-events: none; }
+        canvas { background: #040404; display: none; cursor: crosshair; }
+        .hidden { display: none !important; }
+
+        /* DEATH SCREEN SPECIFIC */
+        .death-msg { color: var(--red); font-weight: 900; font-size: 30px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="main-menu" class="overlay">
+    <div class="logo">SNAKE // <span>IO</span></div>
+    <div class="wallet-ui">VAULT_BALANCE: <span class="credits-val">0</span></div>
+    <div class="menu-card">
+        <button class="btn" onclick="initGame()">Spawn Entity</button>
+        <button class="btn secondary" onclick="openMenu('shop-menu')">Neural Shop</button>
+        <button class="btn secondary" onclick="window.location.href='index.html'">Return to Hub</button>
+    </div>
+</div>
+
+<div id="shop-menu" class="overlay hidden">
+    <div class="menu-card">
+        <h2 style="color:var(--blue); margin-top:0;">SKIN_VAULT</h2>
+        <div class="wallet-ui">VAULT: <span class="credits-val">0</span></div>
+        <button class="btn" id="skin-blue" onclick="selectSkin('#33BBFF', 'blue', 0)">Standard Blue <span style="font-size:9px">[OWNED]</span></button>
+        <button class="btn" id="skin-green" onclick="selectSkin('#00FF41', 'green', 150)">Toxic Green <span style="font-size:9px">150c</span></button>
+        <button class="btn" id="skin-gold" onclick="selectSkin('#FFD700', 'gold', 1000)">Midas Gold <span style="font-size:9px">1000c</span></button>
+        <button class="btn secondary" onclick="openMenu('main-menu')">Back</button>
+    </div>
+</div>
+
+<div id="death-screen" class="overlay hidden">
+    <div class="menu-card">
+        <div class="death-msg">LINK_SEVERED</div>
+        <p style="color:#555; font-size:12px;">ENEMIES OR BOUNDARIES DETECTED</p>
+        <div style="margin: 20px 0; border-top: 1px solid #222; padding-top: 20px;">
+            <div style="font-size:11px; color:var(--blue)">EARNED THIS RUN: <span id="run-creds">0</span></div>
+            <div style="font-size:11px; color:var(--green)">TOTAL VAULT: <span class="credits-val">0</span></div>
+        </div>
+        <button class="btn" onclick="initGame()">Re-Spawn</button>
+        <button class="btn secondary" onclick="openMenu('main-menu')">Menu Hub</button>
+    </div>
+</div>
+
+<div id="hud">
+    <span>MASS: <span id="mass">10</span></span>
+    <span>EARNED: <span id="session-creds">0</span></span>
+</div>
+
+<canvas id="ioCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById("ioCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let user = JSON.parse(localStorage.getItem('snake_io_save')) || { credits: 0, unlocked: ['blue'], equipped: '#33BBFF' };
+    let snake = { x: 0, y: 0, angle: 0, segments: [], speed: 4, length: 15, alive: false };
+    let food = [];
+    let sessionCredits = 0;
+    let camera = { x: 0, y: 0 };
+    let mouse = { x: 0, y: 0 };
+
+    function save() {
+        localStorage.setItem('snake_io_save', JSON.stringify(user));
+        document.querySelectorAll('.credits-val').forEach(el => el.innerText = user.credits);
+    }
+
+    function openMenu(id) {
+        document.querySelectorAll('.overlay').forEach(m => m.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        save();
+    }
+
+    function selectSkin(color, id, price) {
+        if(user.unlocked.includes(id)) { user.equipped = color; openMenu('main-menu'); }
+        else if(user.credits >= price) { user.credits -= price; user.unlocked.push(id); user.equipped = color; save(); openMenu('main-menu'); }
+    }
+
+    function initGame() {
+        document.querySelectorAll('.overlay').forEach(m => m.classList.add('hidden'));
+        document.getElementById('hud').style.opacity = "1";
+        canvas.style.display = "block";
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        snake.x = 0; snake.y = 0;
+        snake.length = 15;
+        snake.segments = Array(15).fill({x: 0, y: 0});
+        snake.alive = true;
+        sessionCredits = 0;
+        food = [];
+        for(let i=0; i<150; i++) spawnFood();
+        
+        window.onmousemove = e => { mouse.x = e.clientX; mouse.y = e.clientY; };
+        update();
+    }
+
+    function spawnFood() {
+        food.push({
+            x: (Math.random() - 0.5) * 5000,
+            y: (Math.random() - 0.5) * 5000,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+            r: Math.random() * 4 + 2
+        });
+    }
+
+    function die() {
+        snake.alive = false;
+        document.getElementById('run-creds').innerText = sessionCredits;
+        openMenu('death-screen');
+    }
+
+    function update() {
+        if(!snake.alive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Boundaries (Die if you go too far)
+        if(Math.abs(snake.x) > 2500 || Math.abs(snake.y) > 2500) die();
+
+        const targetAngle = Math.atan2(mouse.y - canvas.height/2, mouse.x - canvas.width/2);
+        snake.angle = targetAngle;
+        snake.x += Math.cos(snake.angle) * snake.speed;
+        snake.y += Math.sin(snake.angle) * snake.speed;
+
+        camera.x += (snake.x - camera.x) * 0.1;
+        camera.y += (snake.y - camera.y) * 0.1;
+
+        ctx.save();
+        ctx.translate(canvas.width/2 - camera.x, canvas.height/2 - camera.y);
+
+        // Map Boundary Box
+        ctx.strokeStyle = "rgba(255, 49, 49, 0.3)";
+        ctx.lineWidth = 10;
+        ctx.strokeRect(-2500, -2500, 5000, 5000);
+
+        food.forEach((f, i) => {
+            ctx.fillStyle = f.color;
+            ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill();
+            if(Math.hypot(snake.x - f.x, snake.y - f.y) < 25) {
+                snake.length += 0.8;
+                sessionCredits += 2; 
+                user.credits += 2; // INSTANT VAULT SYNC
+                save(); 
+                food.splice(i, 1);
+                spawnFood();
+                document.getElementById('session-creds').innerText = sessionCredits;
+            }
+        });
+
+        snake.segments.unshift({x: snake.x, y: snake.y});
+        if(snake.segments.length > snake.length) snake.segments.pop();
+
+        ctx.strokeStyle = user.equipped;
+        ctx.lineWidth = 22;
+        ctx.shadowBlur = 20; ctx.shadowColor = user.equipped;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(snake.segments[0].x, snake.segments[0].y);
+        for(let i=1; i<snake.segments.length; i++) ctx.lineTo(snake.segments[i].x, snake.segments[i].y);
+        ctx.stroke();
+        
+        ctx.restore();
+        document.getElementById('mass').innerText = Math.floor(snake.length);
+        requestAnimationFrame(update);
+    }
+
+    window.onload = save;
+</script>
+</body>
+</html>
