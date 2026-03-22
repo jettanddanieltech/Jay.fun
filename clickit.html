@@ -2,89 +2,181 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPU Overclock: Persistent Edition</title>
+    <title>TECH_TYCOON // EVOLUTION</title>
     <style>
-        body {
-            background-color: #050505;
-            color: #00ffcc;
-            font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+        :root { --bg: #000; --blue: #33BBFF; --green: #00FF41; --panel: #0a0a0a; --text: #fff; --border: #1a1a1a; --stage-color: #33BBFF; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; display: flex; height: 100vh; }
 
-        .game-layout {
-            display: flex;
-            gap: 20px;
-            max-width: 900px;
-            width: 90%;
-        }
+        /* --- NAVIGATION & SHOP (Consolidated for focus) --- */
+        #nav { width: 70px; background: #050505; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        .nav-btn { width: 40px; height: 40px; margin-bottom: 20px; cursor: pointer; border: 1px solid #222; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.3s; color: #444; }
+        .nav-btn.active { border-color: var(--blue); color: var(--blue); box-shadow: 0 0 10px rgba(51,187,255,0.2); }
 
-        .main-game, .shop {
-            background: #0f0f0f;
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid #00ffcc;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
-        }
+        #shop-panel { width: 340px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .item-list { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .item { background: #0d0d0d; border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .item:hover { border-color: var(--stage-color); transform: scale(1.02); }
+        .item h4 { margin: 0; font-size: 13px; color: var(--text); }
+        .price { color: var(--green); font-family: monospace; font-size: 11px; margin-top: 8px; display: block; }
 
-        .main-game { flex: 2; text-align: center; }
-        .shop { flex: 1; min-width: 260px; }
-
-        h1 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin: 0;}
-        #score-display { font-size: 3.5rem; font-weight: bold; margin: 10px 0; color: #fff; text-shadow: 0 0 10px #00ffcc; }
+        /* --- EVOLUTION VIEWPORT --- */
+        #viewport { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #080808 0%, #000 100%); }
         
-        #click-button {
-            background: none;
-            border: none;
-            width: 200px;
-            height: 200px;
-            cursor: pointer;
-            transition: transform 0.05s;
-            padding: 0;
-            outline: none;
+        #evolution-hud { position: absolute; top: 40px; text-align: center; }
+        .balance { font-size: 50px; font-weight: 900; color: var(--stage-color); transition: 0.5s; }
+        .stage-info { font-size: 10px; letter-spacing: 4px; color: #444; margin-top: 10px; text-transform: uppercase; }
+
+        /* THE CLICKABLE CORE */
+        #tech-core { 
+            width: 300px; height: 300px; position: relative; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s, filter 0.5s;
         }
-
-        #click-button img {
-            width: 100%;
-            filter: drop-shadow(0 0 10px #00ffcc);
+        #tech-core:active { transform: scale(0.95); }
+        
+        /* Dynamic Core Visuals */
+        .core-visual { 
+            width: 100%; height: 100%; border: 3px solid var(--stage-color); 
+            transition: all 0.8s ease; position: absolute;
+            box-shadow: 0 0 30px rgba(51, 187, 255, 0.1);
         }
+        
+        /* Stage Shapes */
+        .stage-0 { border-radius: 10px; transform: rotate(0deg); } /* Microchip */
+        .stage-1 { border-radius: 50%; transform: rotate(45deg); border-width: 8px; } /* Mainframe */
+        .stage-2 { border-radius: 20px; transform: rotate(135deg); clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); } /* Quantum */
+        .stage-3 { border-radius: 50%; border-style: double; border-width: 15px; animation: pulse 2s infinite; } /* Singularity */
 
-        #click-button:active { transform: scale(0.92); }
+        @keyframes pulse { 0% { box-shadow: 0 0 20px var(--stage-color); } 50% { box-shadow: 0 0 70px var(--stage-color); } 100% { box-shadow: 0 0 20px var(--stage-color); } }
 
-        .shop-item {
-            background: #151515;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #333;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        .pop { position: absolute; color: var(--stage-color); font-weight: bold; pointer-events: none; animation: popUp 0.8s forwards; font-family: monospace; }
+        @keyframes popUp { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -100px); } }
 
-        .shop-item:hover { border-color: #00ffcc; background: #1a1a1a; }
-        .shop-item.disabled { opacity: 0.3; cursor: not-allowed; }
-
-        .item-name { display: block; font-weight: bold; color: #00ffcc; font-size: 0.9rem; }
-        .item-cost { font-size: 0.8rem; color: #ffcc00; }
-
-        #save-status { font-size: 0.7rem; color: #444; margin-top: 10px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="game-layout">
-        <div class="main-game">
-            <h1>SYSTEM OVERCLOCK</h1>
-            <div id="score-display">0</div>
-            
-            <button id="click-button">
-                <img src="https://cdn-icons-png.flaticon.com/512/908/908424.png" alt="CPU Chip">
-            </button>
-            
-            <div id="cps-display" style="color: #666; margin-top: 10px;">Data Rate: 0 bits/s</div>
-            <div id="save-status">System Synced</div>
-            <button onclick="resetGame()" style="background:none; border:none; color:#333; cursor:pointer; font-size: 10px; margin-top: 20px;">[Format Drive (Reset)]
+<nav id="nav">
+    <div class="nav-btn active" onclick="tab('upg')">⚒</div>
+    <div class="nav-btn" onclick="tab('auto')">⚙</div>
+    <div class="nav-btn" onclick="location.reload()">↺</div>
+</nav>
+
+<aside id="shop-panel">
+    <div style="padding: 20px; border-bottom: 1px solid #1a1a1a; font-size: 12px; letter-spacing: 2px;">SYSTEM_MARKET</div>
+    <div id="tab-upg" class="item-list">
+        <div class="item" onclick="buy('click', 1, 0)"><h4>Upgrade Nodes</h4><p>+1 Click Power</p><span class="price" id="c0">$15</span></div>
+        <div class="item" onclick="buy('click', 10, 1)"><h4>Data Bus</h4><p>+10 Click Power</p><span class="price" id="c1">$250</span></div>
+    </div>
+    <div id="tab-auto" class="item-list hidden">
+        <div class="item" onclick="buy('auto', 1, 0)"><h4>Auto-Link</h4><p>1 Click/sec</p><span class="price" id="a0">$100</span></div>
+        <div class="item" onclick="buy('auto', 5, 1)"><h4>Neural Bot</h4><p>5 Clicks/sec</p><span class="price" id="a1">$800</span></div>
+    </div>
+</aside>
+
+<main id="viewport">
+    <div id="evolution-hud">
+        <div class="balance">$<span id="bal-val">0</span></div>
+        <div class="stage-info" id="stage-name">Stage: Silicon_Microchip</div>
+    </div>
+
+    <div id="tech-core" onclick="handleTap(event)">
+        <div id="core-display" class="core-visual stage-0"></div>
+    </div>
+</main>
+
+<script>
+    let game = JSON.parse(localStorage.getItem('tech_evo_save')) || {
+        bal: 0, total: 0, click: 1, auto: 0, 
+        costs: { click: [15, 250], auto: [100, 800] },
+        stage: 0
+    };
+
+    const stages = [
+        { name: "Silicon_Microchip", color: "#33BBFF", req: 0 },
+        { name: "Server_Mainframe", color: "#00FF41", req: 1000 },
+        { name: "Quantum_Array", color: "#FFD700", req: 10000 },
+        { name: "Singularity_Engine", color: "#FF3131", req: 100000 }
+    ];
+
+    function save() {
+        localStorage.setItem('tech_evo_save', JSON.stringify(game));
+        document.getElementById('bal-val').innerText = Math.floor(game.bal);
+        checkEvolution();
+        updateUI();
+    }
+
+    function updateUI() {
+        game.costs.click.forEach((c, i) => document.getElementById('c'+i).innerText = `$${c}`);
+        game.costs.auto.forEach((c, i) => document.getElementById('a'+i).innerText = `$${c}`);
+        
+        const current = stages[game.stage];
+        document.body.style.setProperty('--stage-color', current.color);
+        document.getElementById('stage-name').innerText = `Stage: ${current.name}`;
+        
+        const core = document.getElementById('core-display');
+        core.className = `core-visual stage-${game.stage}`;
+    }
+
+    function checkEvolution() {
+        for(let i = stages.length - 1; i >= 0; i--) {
+            if(game.total >= stages[i].req) {
+                if(game.stage !== i) {
+                    game.stage = i;
+                    // Flash effect on evolution
+                    document.getElementById('viewport').style.background = "white";
+                    setTimeout(() => document.getElementById('viewport').style.background = "", 100);
+                }
+                break;
+            }
+        }
+    }
+
+    function handleTap(e) {
+        game.bal += game.click;
+        game.total += game.click;
+        
+        const pop = document.createElement('div');
+        pop.className = 'pop';
+        pop.style.left = e.clientX + 'px';
+        pop.style.top = e.clientY + 'px';
+        pop.innerText = `+$${game.click}`;
+        document.body.appendChild(pop);
+        setTimeout(() => pop.remove(), 800);
+        save();
+    }
+
+    function buy(type, amt, idx) {
+        let cost = game.costs[type][idx];
+        if(game.bal >= cost) {
+            game.bal -= cost;
+            game[type] += amt;
+            game.costs[type][idx] = Math.floor(cost * 1.5);
+            save();
+        }
+    }
+
+    function tab(id) {
+        document.getElementById('tab-upg').classList.add('hidden');
+        document.getElementById('tab-auto').classList.add('hidden');
+        document.getElementById(`tab-${id}`).classList.remove('hidden');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    // Main Game Heartbeat
+    setInterval(() => {
+        if(game.auto > 0) {
+            let gain = (game.auto * game.click) / 10;
+            game.bal += gain;
+            game.total += gain;
+            document.getElementById('bal-val').innerText = Math.floor(game.bal);
+            checkEvolution();
+        }
+    }, 100);
+
+    window.onload = save;
+</script>
+</body>
+</html>
