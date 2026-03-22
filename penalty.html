@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PENALTY_PRO // CAREER_MODE</title>
+    <style>
+        :root { --bg: #000; --blue: #33BBFF; --green: #00FF41; --panel: #0a0a0a; --text: #fff; }
+        body.light-mode { --bg: #f4f4f4; --blue: #0077ff; --green: #008800; --panel: #fff; --text: #000; }
+        
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+
+        /* --- OMNI UI LAYER --- */
+        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
+        .logo { font-size: 60px; font-weight: 900; color: var(--blue); text-shadow: 0 0 20px rgba(51, 187, 255, 0.3); margin-bottom: 5px; letter-spacing: -3px; }
+        
+        .menu-card { background: var(--panel); border: 1px solid #111; padding: 30px; border-radius: 24px; width: 340px; }
+        
+        .btn { background: var(--panel); border: 1px solid var(--blue); color: var(--blue); padding: 12px 0; border-radius: 50px; cursor: pointer; font-weight: bold; margin: 8px 0; width: 100%; transition: 0.2s; text-transform: uppercase; font-size: 12px; }
+        .btn:hover:not(:disabled) { background: var(--blue); color: #000; box-shadow: 0 0 20px var(--blue); }
+        .btn:disabled { border-color: #222; color: #333; cursor: not-allowed; }
+        .btn.secondary { border-color: #333; color: #666; }
+
+        /* --- HUD --- */
+        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-around; font-family: monospace; color: var(--green); opacity: 0; z-index: 50; pointer-events: none; }
+        canvas { background: radial-gradient(circle at bottom, #050505 0%, #000 100%); display: none; cursor: crosshair; }
+        
+        .currency { color: var(--green); font-weight: bold; font-size: 14px; margin-bottom: 15px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="main-menu" class="overlay">
+    <div class="logo">PENALTY // <span>PRO</span></div>
+    <div class="currency">CREDITS: <span id="wallet">0</span></div>
+    <div class="menu-card">
+        <button class="btn" onclick="startMatch()">Next Match</button>
+        <button class="btn secondary" onclick="openMenu('shop-menu')">Upgrade Shop</button>
+        <button class="btn secondary" onclick="openMenu('locker-room')">Locker Room</button>
+        <button class="btn secondary" onclick="window.location.href='index.html'">Hub Terminal</button>
+    </div>
+</div>
+
+<div id="shop-menu" class="overlay hidden">
+    <div class="menu-card">
+        <h2 style="color:var(--blue)">SYSTEM_UPGRADES</h2>
+        <div class="currency">CREDITS: <span class="wallet-val">0</span></div>
+        
+        <button class="btn" id="upg-power" onclick="buyUpgrade('power')">Power (+Speed) - 50c</button>
+        <button class="btn" id="upg-acc" onclick="buyUpgrade('acc')">Precision (+Size) - 75c</button>
+        
+        <button class="btn secondary" onclick="openMenu('main-menu')">Return to Hub</button>
+    </div>
+</div>
+
+<div id="locker-room" class="overlay hidden">
+    <div class="menu-card">
+        <h2 style="color:var(--blue)">LOCKER_ROOM</h2>
+        <p style="font-size:10px; color:#444;">SELECT KIT COLOR</p>
+        <button class="btn" onclick="setKit('#33BBFF')">Electric Blue</button>
+        <button class="btn" onclick="setKit('#00FF41')">Neon Green</button>
+        <button class="btn" onclick="setKit('#FF00FF')">Hyper Pink</button>
+        <button class="btn secondary" onclick="openMenu('main-menu')">Confirm</button>
+    </div>
+</div>
+
+<div id="hud">
+    <span>GOALS: <span id="score">0</span></span>
+    <span>SAVES: <span id="saves">0</span></span>
+</div>
+
+<canvas id="soccerCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById("soccerCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // --- SAVE DATA ---
+    let stats = JSON.parse(localStorage.getItem('penalty_save')) || {
+        credits: 0, power: 1, acc: 1, kit: '#33BBFF'
+    };
+
+    let session = { score: 0, saves: 0 };
+    let ball = { x: 0, y: 0, r: 18, active: false, vx: 0, vy: 0 };
+    let goalie = { x: 0, y: 0, w: 60, h: 90, targetX: 0 };
+    let goal = { x: 0, y: 80, w: 0, h: 200 };
+
+    function save() {
+        localStorage.setItem('penalty_save', JSON.stringify(stats));
+        document.getElementById('wallet').innerText = stats.credits;
+        document.querySelectorAll('.wallet-val').forEach(el => el.innerText = stats.credits);
+    }
+
+    function openMenu(id) {
+        document.querySelectorAll('.overlay').forEach(m => m.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        save();
+    }
+
+    function setKit(color) { stats.kit = color; save(); }
+
+    function buyUpgrade(type) {
+        let cost = type === 'power' ? 50 : 75;
+        if(stats.credits >= cost) {
+            stats.credits -= cost;
+            stats[type]++;
+            save();
+            alert("UPGRADE INSTALLED");
+        } else {
+            alert("INSUFFICIENT CREDITS");
+        }
+    }
+
+    function startMatch() {
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('hud').style.opacity = "1";
+        canvas.style.display = "block";
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        goal.w = canvas.width * 0.4;
+        goal.x = (canvas.width - goal.w) / 2;
+        resetBall();
+        goalie.x = canvas.width/2 - goalie.w/2;
+        goalie.y = goal.y + goal.h - goalie.h;
+        update();
+    }
+
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height - 120;
+        ball.r = 15 + (stats.acc * 2); // Precision upgrade makes ball easier to hit with
+        ball.active = false;
+    }
+
+    canvas.addEventListener("mousedown", (e) => {
+        if(ball.active) return;
+        const speedMult = 0.05 + (stats.power * 0.01); // Power upgrade
+        ball.vx = (e.clientX - ball.x) * speedMult;
+        ball.vy = (e.clientY - ball.y) * speedMult;
+        ball.active = true;
+        
+        setTimeout(() => { goalie.targetX = e.clientX - goalie.w / 2; }, 200);
+    });
+
+    function update() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = varColor('--blue'); ctx.lineWidth = 5;
+        ctx.strokeRect(goal.x, goal.y, goal.w, goal.h);
+        
+        ctx.fillStyle = stats.kit;
+        goalie.x += (goalie.targetX - goalie.x) * 0.08;
+        ctx.fillRect(goalie.x, goalie.y, goalie.w, goalie.h);
+
+        if(ball.active) {
+            ball.x += ball.vx; ball.y += ball.vy;
+            ball.r = Math.max(ball.r * 0.985, 5);
+
+            if(ball.y <= goalie.y + goalie.h && ball.y >= goalie.y && ball.x >= goalie.x && ball.x <= goalie.x + goalie.w) {
+                session.saves++;
+                document.getElementById('saves').innerText = session.saves;
+                resetBall();
+            } else if(ball.y <= goal.y) {
+                if(ball.x >= goal.x && ball.x <= goal.x + goal.w) {
+                    session.score++;
+                    stats.credits += 10; // Earn 10 credits per goal
+                    document.getElementById('score').innerText = session.score;
+                }
+                resetBall();
+            }
+        }
+
+        ctx.fillStyle = "#fff"; ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+        requestAnimationFrame(update);
+    }
+
+    function varColor(name) { return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+    window.onload = save;
+</script>
+</body>
+</html>
