@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PC_ARCHITECT // REAL_LIFE_GUIDE</title>
+    <style>
+        :root { --bg: #030305; --panel: #0d0d12; --blue: #0088ff; --green: #00ff88; --orange: #ff9d00; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+
+        /* THE TUTORIAL SIDEBAR */
+        #tutorial-sidebar { width: 400px; background: var(--panel); border-right: 2px solid #222; display: flex; flex-direction: column; box-shadow: 10px 0 30px rgba(0,0,0,0.5); z-index: 100; }
+        .step-header { padding: 30px; background: linear-gradient(to right, #1a1a25, var(--panel)); border-bottom: 1px solid #333; }
+        .step-num { color: var(--blue); font-weight: 900; font-size: 12px; letter-spacing: 2px; }
+        .step-title { font-size: 20px; margin: 5px 0; font-weight: 700; }
+
+        .instruction-box { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        .pro-tip { background: rgba(255, 157, 0, 0.1); border-left: 4px solid var(--orange); padding: 15px; margin-top: 20px; font-size: 13px; color: var(--orange); }
+        
+        .nav-btns { padding: 20px; display: flex; gap: 10px; border-top: 1px solid #222; }
+        .nav-btn { flex: 1; padding: 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        .prev { background: #333; color: #fff; }
+        .next { background: var(--blue); color: #fff; }
+
+        /* THE VISUAL AID */
+        #visual-canvas { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #15151a 0%, #030305 100%); position: relative; }
+        .diagram-container { width: 500px; height: 400px; border: 1px solid #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 80px; background: rgba(255,255,255,0.02); margin-bottom: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .part-highlight { color: var(--blue); filter: drop-shadow(0 0 15px var(--blue)); transition: 0.5s; }
+    </style>
+</head>
+<body>
+
+<aside id="tutorial-sidebar">
+    <div class="step-header">
+        <div class="step-num">IRL_PROTOCOL // STEP <span id="step-count">1</span></div>
+        <div class="step-title" id="title-text">Static Safety</div>
+    </div>
+
+    <div class="instruction-box">
+        <p id="desc-text">Before touching any real components, you must discharge static electricity. Static can fry a $500 CPU instantly.</p>
+        
+        <div class="pro-tip" id="tip-text">
+            <strong>PRO TIP:</strong> Touch a grounded metal object (like your PC case) frequently if you don't have an anti-static wrist strap.
+        </div>
+    </div>
+
+    <div class="nav-btns">
+        <button class="nav-btn prev" onclick="changeStep(-1)">Back</button>
+        <button class="nav-btn next" onclick="changeStep(1)">Next Step</button>
+    </div>
+</aside>
+
+<main id="visual-canvas">
+    <div class="diagram-container">
+        <div id="visual-icon" class="part-highlight">⚡</div>
+    </div>
+    <div style="font-size: 12px; color: #444; letter-spacing: 5px;">REAL_WORLD_ASSEMBLY_MODE</div>
+</main>
+
+<script>
+    const tutorialData = [
+        {
+            title: "Static Safety",
+            desc: "Before touching components, touch a grounded metal object. Never build on carpet! Use a wooden or plastic table to stay safe.",
+            tip: "Building in your socks on a rug is a recipe for disaster. Stay on hard flooring.",
+            icon: "⚡"
+        },
+        {
+            title: "CPU Installation",
+            desc: "Lift the tension arm on the motherboard. Look for the tiny gold triangle on the corner of the CPU. Match it with the triangle on the socket. Gently drop it in—DO NOT PUSH.",
+            tip: "If you bend a pin on the motherboard, it’s game over. Precision is everything here.",
+            icon: "🧠"
+        },
+        {
+            title: "RAM Seating",
+            desc: "Open the clips on the DIMM slots. Align the notch in the RAM stick with the ridge in the slot. Push down firmly with both thumbs until you hear a 'CLICK'.",
+            tip: "RAM requires more force than you think. Don't be afraid to push until it snaps into place.",
+            icon: "📼"
+        },
+        {
+            title: "Applying Paste",
+            desc: "Apply a pea-sized amount of thermal paste to the center of the CPU. Then, mount your cooler on top. The pressure will spread it perfectly.",
+            tip: "Too much paste is messy, but too little will cause your PC to overheat and shut down.",
+            icon: "💧"
+        },
+        {
+            title: "The 24-Pin Plug",
+            desc: "Locate the massive 24-pin cable from your PSU. It only goes in one way. Line up the plastic clip on the cable with the ridge on the motherboard slot.",
+            tip: "This is the hardest cable to unplug later, so make sure it's fully seated the first time!",
+            icon: "🔌"
+        }
+    ];
+
+    let currentStep = 0;
+
+    function changeStep(dir) {
+        currentStep += dir;
+        if (currentStep < 0) currentStep = 0;
+        if (currentStep >= tutorialData.length) currentStep = tutorialData.length - 1;
+
+        const data = tutorialData[currentStep];
+        document.getElementById('step-count').innerText = currentStep + 1;
+        document.getElementById('title-text').innerText = data.title;
+        document.getElementById('desc-text').innerText = data.desc;
+        document.getElementById('tip-text').innerHTML = `<strong>PRO TIP:</strong> ${data.tip}`;
+        document.getElementById('visual-icon').innerText = data.icon;
+    }
+</script>
+</body>
+</html>
