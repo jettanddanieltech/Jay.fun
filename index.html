@@ -3,181 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE_TECH_INDEX // GLOBAL_HUB</title>
+    <title>ARCADE_OS // COMMAND_CENTER</title>
     <style>
-        :root { 
-            --bg: #000; 
-            --blue: #33BBFF; 
-            --green: #00FF41; 
-            --border: #111; 
-            --panel: #080808;
+        :root {
+            --bg: #050508;
+            --panel: rgba(255, 255, 255, 0.03);
+            --accent: #00A2FF;
+            --text: #ffffff;
+            --border: rgba(255, 255, 255, 0.1);
         }
 
-        body { 
-            background: var(--bg); 
-            color: var(--blue); 
-            font-family: 'Inter', 'Segoe UI', sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            overflow: hidden; 
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #050508 100%);
         }
 
-        /* HUD HEADER */
-        .hud-header { 
-            padding: 15px 30px; 
-            border-bottom: 1px solid var(--border); 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 10px; 
-            letter-spacing: 3px; 
-            color: var(--green); 
+        header {
+            width: 100%;
+            padding: 40px 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 8px;
             text-transform: uppercase;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(0, 162, 255, 0.5);
         }
 
-        /* MAIN LAYOUT */
-        #container { 
-            display: flex; 
-            flex-grow: 1; 
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1200px;
+            padding-bottom: 50px;
         }
 
-        /* SIDEBAR NAVIGATION */
-        #sidebar { 
-            width: 280px; 
-            background: var(--panel); 
-            border-right: 1px solid var(--border); 
-            display: flex; 
-            flex-direction: column; 
-            padding: 20px; 
-        }
-
-        .category-label { 
-            font-size: 11px; 
-            color: #444; 
-            margin-bottom: 15px; 
-            letter-spacing: 2px; 
-        }
-
-        .nav-link { 
-            padding: 12px 15px; 
-            margin-bottom: 8px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            border: 1px solid transparent; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px;
+        .game-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
             text-decoration: none;
-            color: inherit;
+            color: var(--text);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
         }
 
-        .nav-link:hover { 
-            background: #0c0c0c; 
-            border-color: var(--blue); 
-            color: #fff; 
-            box-shadow: 0 0 15px rgba(51, 187, 255, 0.1); 
+        .game-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* PORTAL PREVIEW */
-        #portal { 
-            flex-grow: 1; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 25px; 
-            padding: 40px; 
-            overflow-y: auto; 
-            background: radial-gradient(circle at center, #050505 0%, #000 100%);
+        .game-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--accent);
+            opacity: 0;
+            transition: 0.3s;
         }
 
-        .game-card { 
-            background: var(--panel); 
-            border: 1px solid var(--border); 
-            border-radius: 20px; 
-            padding: 30px; 
-            text-align: center; 
-            transition: 0.4s; 
-            cursor: pointer; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center;
+        .game-card:hover::before {
+            opacity: 1;
         }
 
-        .game-card:hover { 
-            border-color: var(--green); 
-            transform: translateY(-5px); 
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.1); 
+        .game-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: var(--accent);
         }
 
-        .game-card h2 { margin: 10px 0; font-size: 24px; color: #fff; }
-        .game-card p { font-size: 13px; color: #666; }
-        
-        .status-dot { 
-            width: 8px; height: 8px; 
-            border-radius: 50%; 
-            background: var(--green); 
-            display: inline-block; 
-            margin-right: 10px; 
-            box-shadow: 0 0 8px var(--green);
+        .game-card p {
+            margin: 0;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.5;
         }
 
+        .status {
+            margin-top: 20px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(0, 162, 255, 0.1);
+            color: var(--accent);
+            border-radius: 4px;
+            font-size: 9px;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
 
-<div class="hud-header">
-    <span>System: THE_TECH_INDEX</span>
-    <span>Status: All Nodes Operational</span>
-    <span>Access_Level: Administrator</span>
+<header>
+    <h1>SYSTEM_ARCHIVE</h1>
+    <p style="font-size: 11px; color: #555; margin-top: 10px;">AUTHORIZED_ACCESS_ONLY // VERSION_2026.3</p>
+</header>
+
+<div class="grid">
+
+    <a href="pcbuild.html" class="game-card">
+        <span class="tag">SIMULATOR</span>
+        <h2>PC_Architect</h2>
+        <p>Full-spec PC assembly with real-life wiring protocol and hardware guide.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
+    <a href="boonshooter.html" class="game-card">
+        <span class="tag">TOWER DEFENSE</span>
+        <h2>BoonShooter</h2>
+        <p>Strategic defense game featuring 13 specialized character types.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
+    <a href="techtycoon.html" class="game-card">
+        <span class="tag">MANAGEMENT</span>
+        <h2>Tech_Tycoon</h2>
+        <p>Build your empire. Hire developers and scale your tech studio assets.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
+    <a href="snakeio.html" class="game-card">
+        <span class="tag">ARCADE</span>
+        <h2>Snake.io</h2>
+        <p>Classic competitive snake mechanics optimized for browser.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
+    <a href="penalty.html" class="game-card">
+        <span class="tag">SPORTS</span>
+        <h2>Penalty_Kick</h2>
+        <p>Precision-based soccer mini-game with high-score tracking.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
+    <a href="2048.html" class="game-card">
+        <span class="tag">PUZZLE</span>
+        <h2>2048_Core</h2>
+        <p>The mathematical logic classic. Reach the target tile to win.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
+    <a href="clickit.html" class="game-card">
+        <span class="tag">IDLE</span>
+        <h2>Click_It</h2>
+        <p>Hyper-casual idle clicker for speed and efficiency testing.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
+    <a href="galaxyshot.html" class="game-card">
+        <span class="tag">ACTION</span>
+        <h2>GalaxyShot</h2>
+        <p>Space-themed shooter with procedural wave generation.</p>
+        <div class="status">● ONLINE</div>
+    </a>
+
 </div>
 
-<div id="container">
-    <nav id="sidebar">
-        <div class="category-label">SYSTEM_PROJECTS</div>
-        <a href="index.html" class="nav-link">🏠 Main Terminal</a>
-        <a href="tetris.html" class="nav-link">🧱 Tetris Engine</a>
-        <a href="bloons.html" class="nav-link">🎈 BoonShooter</a>
-        <a href="2048html
-        " class="nav-link">🔢 2048 Logic</a>
-        <a href="football.html" class="nav-link">🏈 Football Bros</a>
-        <a href="clickit.html" class="nav-link">🖱️ ClickIt</a>
-    </nav>
-
-    <main id="portal">
-        <a href="tetris.html" style="text-decoration:none">
-            <div class="game-card">
-                <div class="status-dot"></div>
-                <h2>TETRIS</h2>
-                <p>Full-scale neural engine block.</p>
-            </div>
-        </a>
-
-        <a href="bloons.html" style="text-decoration:none">
-            <div class="game-card">
-                <div class="status-dot"></div>
-                <h2>BOONSHOOTER</h2>
-                <p>Advanced monkey-defense simulation.</p>
-            </div>
-        </a>
-
-        <a href="2048.html" style="text-decoration:none">
-            <div class="game-card">
-                <div class="status-dot"></div>
-                <h2>2048</h2>
-                <p>Recursive grid-merging logic.</p>
-            </div>
-        </a>
-
-        <a href="football.html" style="text-decoration:none">
-            <div class="game-card">
-                <div class="status-dot"></div>
-                <h2>FOOTBALL BROS</h2>
-                <p>Physics-based roster management.</p>
-            </div>
-        </a>
-    </main>
-</div>
+<footer style="margin-top: auto; padding: 40px; color: #222; font-size: 10px;">
+    END_OF_LINE // NEW_MODULES_PENDING...
+</footer>
 
 </body>
 </html>
