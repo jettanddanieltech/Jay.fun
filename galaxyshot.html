@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Galaxy_Shot // BOSS_REACH</title>
+    <style>
+        :root { --bg: #000; --blue: #33BBFF; --green: #00FF41; --panel: #0a0a0a; --text: #fff; --red: #ff3131; --gold: #FFD700; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+
+        /* UI OVERLAYS */
+        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
+        .logo { font-size: 50px; font-weight: 900; color: var(--blue); text-shadow: 0 0 20px rgba(51, 187, 255, 0.3); letter-spacing: -2px; margin-bottom: 5px; }
+        .high-score-label { color: var(--gold); font-size: 12px; letter-spacing: 3px; margin-bottom: 20px; font-family: monospace; }
+        
+        .menu-card { background: var(--panel); border: 1px solid #111; padding: 30px; border-radius: 24px; width: 340px; box-shadow: 0 10px 50px rgba(0,0,0,0.9); }
+        
+        .btn { background: var(--panel); border: 1px solid var(--blue); color: var(--blue); padding: 12px 0; border-radius: 50px; cursor: pointer; font-weight: bold; margin: 8px 0; width: 100%; transition: 0.2s; text-transform: uppercase; font-size: 11px; }
+        .btn:hover { background: var(--blue); color: #000; box-shadow: 0 0 20px var(--blue); }
+        .btn.secondary { border-color: #333; color: #666; }
+
+        /* HUD & BOSS BAR */
+        #hud { position: absolute; top: 20px; width: 90%; display: flex; justify-content: space-between; font-family: monospace; color: var(--green); opacity: 0; z-index: 50; pointer-events: none; }
+        #boss-ui { position: absolute; bottom: 40px; width: 60%; left: 20%; opacity: 0; transition: 0.5s; z-index: 50; text-align: center; }
+        #boss-bar { width: 100%; height: 6px; background: #111; border: 1px solid var(--red); overflow: hidden; }
+        #boss-fill { width: 100%; height: 100%; background: var(--red); transition: 0.1s; }
+
+        canvas { background: #020202; display: none; cursor: crosshair; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="main-menu" class="overlay">
+    <div class="logo">VOID // <span>SURVIVOR</span></div>
+    <div class="high-score-label">BEST_RUN: <span id="best-val">0</span> KILLS</div>
+    <div class="menu-card">
+        <button class="btn" onclick="startGame()">Initiate Combat</button>
+        <button class="btn secondary" onclick="openMenu('hangar-menu')">Hangar (Upgrades)</button>
+        <button class="btn secondary" onclick="window.location.href='index.html'">Hub Terminal</button>
+    </div>
+</div>
+
+<div id="hangar-menu" class="overlay hidden">
+    <div class="menu-card">
+        <h2 style="color:var(--blue)">HANGAR_REPAIRS</h2>
+        <p style="font-size:10px; color:#444; margin-bottom:15px;">PERMANENT SHIP MODS</p>
+        <button class="btn" onclick="upgrade('hp')">Hull Plating (+HP)</button>
+        <button class="btn" onclick="upgrade('dmg')">Pulse Rounds (+DMG)</button>
+        <button class="btn secondary" onclick="openMenu('main-menu')">Confirm</button>
+    </div>
+</div>
+
+<div id="hud">
+    <span>HULL: <span id="hp-display">100</span>%</span>
+    <span>THREAT_LEVEL: <span id="kill-display">0</span></span>
+</div>
+
+<div id="boss-ui">
+    <div style="color:var(--red); font-size:10px; letter-spacing:5px; margin-bottom:5px;">TITAN_DETECTED</div>
+    <div id="boss-bar"><div id="boss-fill"></div></div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // PERSISTENCE
+    let db = JSON.parse(localStorage.getItem('void_survivor_data')) || {
+        best: 0,
+        hpLevel: 1,
+        dmgLevel: 1
+    };
+
+    let game = { active: false, kills: 0, hp: 100, bossActive: false };
+    let player = { x: 0, y: 0, r: 15, spd: 5 };
+    let boss = { x: 0, y: 0, hp: 0, maxHp: 100, r: 60 };
+    let bullets = [], enemies = [], keys = {}, mouse = {x:0, y:0};
+
+    function save() {
+        localStorage.setItem('void_survivor_data', JSON.stringify(db));
+        document.getElementById('best-val').innerText = db.best;
+    }
+
+    function openMenu(id) {
+        document.querySelectorAll('.overlay').forEach(m => m.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        save();
+    }
+
+    function upgrade(type) {
+        if(type === 'hp') db.hpLevel++;
+        if(type === 'dmg') db.dmgLevel++;
+        alert("MOD_INSTALLED");
+        save();
+    }
+
+    function startGame() {
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('hud').style.opacity = "1";
+        canvas.style.display = "block";
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        player.x = canvas.width/2; player.y = canvas.height/2;
+        game.hp = 100 + (db.hpLevel * 10);
+        game.kills = 0;
+        game.active = true;
+        game.bossActive = false;
+        enemies = []; bullets = [];
+        update();
+    }
+
+    window.onkeydown = e => keys[e.key] = true;
+    window.onkeyup = e => keys[e.key] = false;
+    window.onmousemove = e => { mouse.x = e.clientX; mouse.y = e.clientY; };
+    window.onmousedown = () => {
+        if(!game.active) return;
+        let angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+        bullets.push({ x: player.x, y: player.y, vx: Math.cos(angle)*8, vy: Math.sin(angle)*8 });
+    };
+
+    function spawnBoss() {
+        game.bossActive = true;
+        boss.maxHp = 50 + (game.kills * 2);
+        boss.hp = boss.maxHp;
+        boss.x = canvas.width/2;
+        boss.y = -100;
+        document.getElementById('boss-ui').style.opacity = "1";
+    }
+
+    function update() {
+        if(!game.active) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Player Move
+        if(keys['w'] || keys['ArrowUp']) player.y -= 5;
+        if(keys['s'] || keys['ArrowDown']) player.y += 5;
+        if(keys['a'] || keys['ArrowLeft']) player.x -= 5;
+        if(keys['d'] || keys['ArrowRight']) player.x += 5;
+
+        // Draw Player
+        ctx.strokeStyle = "#33BBFF"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI*2); ctx.stroke();
+
+        // Boss Logic
+        if(!game.bossActive && game.kills > 0 && game.kills % 50 === 0) spawnBoss();
+        
+        if(game.bossActive) {
+            boss.y += (150 - boss.y) * 0.02;
+            ctx.strokeStyle = "#FF3131"; ctx.lineWidth = 5;
+            ctx.strokeRect(boss.x - boss.r, boss.y - boss.r, boss.r*2, boss.r*2);
+            document.getElementById('boss-fill').style.width = (boss.hp / boss.maxHp * 100) + "%";
+            
+            // Boss Collision
+            if(Math.hypot(player.x - boss.x, player.y - boss.y) < boss.r + player.r) game.hp -= 1;
+        }
+
+        // Bullets
+        bullets.forEach((b, i) => {
+            b.x += b.vx; b.y += b.vy;
+            ctx.fillStyle = "#FFD700"; ctx.fillRect(b.x, b.y, 4, 4);
+            
+            if(game.bossActive && Math.hypot(b.x - boss.x, b.y - boss.y) < boss.r) {
+                boss.hp -= (1 + db.dmgLevel);
+                bullets.splice(i, 1);
+                if(boss.hp <= 0) {
+                    game.bossActive = false;
+                    game.kills += 10;
+                    document.getElementById('boss-ui').style.opacity = "0";
+                }
+            }
+        });
+
+        // Enemies
+        if(!game.bossActive && Math.random() < 0.04) {
+            enemies.push({ x: Math.random()*canvas.width, y: -20, spd: 2 + (game.kills/50) });
+        }
+
+        enemies.forEach((en, i) => {
+            let angle = Math.atan2(player.y - en.y, player.x - en.x);
+            en.x += Math.cos(angle) * en.spd; en.y += Math.sin(angle) * en.spd;
+            ctx.fillStyle = "#FF3131"; ctx.beginPath(); ctx.arc(en.x, en.y, 10, 0, Math.PI*2); ctx.fill();
+
+            bullets.forEach((b, bi) => {
+                if(Math.hypot(b.x - en.x, b.y - en.y) < 15) {
+                    enemies.splice(i, 1); bullets.splice(bi, 1); game.kills++;
+                }
+            });
+
+            if(Math.hypot(player.x - en.x, player.y - en.y) < 25) {
+                game.hp -= 2; enemies.splice(i, 1);
+            }
+        });
+
+        document.getElementById('hp-display').innerText = Math.max(0, Math.floor(game.hp));
+        document.getElementById('kill-display').innerText = game.kills;
+
+        if(game.hp <= 0) {
+            game.active = false;
+            if(game.kills > db.best) db.best = game.kills;
+            save();
+            alert("SYSTEM_CRITICAL: SHIP_LOST. FINAL_KILLS: " + game.kills);
+            location.reload();
+        }
+
+        requestAnimationFrame(update);
+    }
+    window.onload = save;
+</script>
+</body>
+</html>
