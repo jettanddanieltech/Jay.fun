@@ -2,152 +2,194 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PC_ARCHITECT // TUTORIAL + GAME</title>
+    <title>PC_ARCHITECT // MASTER_BUILD</title>
     <style>
-        :root { --bg: #050507; --panel: #0d0d12; --blue: #0088ff; --green: #00ff88; --gold: #d4af37; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; overflow: hidden; display: flex; height: 100vh; }
+        :root { --bg: #050508; --panel: #111; --blue: #0088ff; --green: #00ff88; --gold: #d4af37; --text: #eee; }
+        body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; overflow: hidden; }
 
-        /* SIDEBAR (TUTORIAL) */
-        #sidebar { width: 380px; background: var(--panel); border-right: 2px solid #1a1a24; display: flex; flex-direction: column; z-index: 100; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-        .step-header { padding: 25px; border-bottom: 1px solid #222; background: linear-gradient(to right, #111, var(--panel)); }
-        .step-num { color: var(--blue); font-size: 10px; letter-spacing: 2px; font-weight: bold; }
-        .step-title { font-size: 18px; margin-top: 5px; color: #fff; }
+        /* SCENE MANAGEMENT */
+        .scene { width: 100vw; height: 100vh; display: none; flex-direction: column; align-items: center; justify-content: center; position: absolute; inset: 0; }
+        .active-scene { display: flex; }
+
+        /* TUTORIAL OVERLAY */
+        #tutorial-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+        .tut-card { max-width: 500px; border: 1px solid var(--blue); padding: 40px; border-radius: 8px; background: #0a0a0f; }
+
+        /* WORKSHOP & STORE */
+        #workshop { background: radial-gradient(circle, #1a1a2e 0%, #050508 100%); }
+        #store { background: #e0e0e0; color: #111; }
+        #bench { width: 850px; height: 550px; background: #15151a; border-bottom: 20px solid #222; position: relative; border: 1px solid #333; }
         
-        .instruction-box { flex-grow: 1; padding: 25px; overflow-y: auto; font-size: 13px; line-height: 1.6; }
-        .pro-tip { background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold); padding: 15px; margin-top: 20px; color: var(--gold); font-size: 12px; }
+        /* CASE & TERMINALS */
+        #pc-case { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 420px; height: 480px; background: #08080a; border: 2px solid #333; }
+        .port { position: absolute; width: 18px; height: 18px; background: rgba(255,255,255,0.05); border: 1px solid #444; cursor: pointer; z-index: 50; font-size: 7px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .port:hover { background: var(--blue); border-color: #fff; transform: scale(1.1); }
+        .port.connected { background: var(--green); border-color: var(--green); box-shadow: 0 0 15px var(--green); }
 
-        .nav-btns { padding: 20px; display: flex; gap: 10px; border-top: 1px solid #222; }
-        .btn { flex: 1; padding: 12px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 11px; transition: 0.2s; border-radius: 2px; }
-        .btn-blue { background: var(--blue); color: white; }
-        .btn-dark { background: #222; color: #888; }
-        .btn:hover { filter: brightness(1.2); }
+        /* WIRING CANVAS */
+        #wire-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 40; }
 
-        /* MAIN WORKBENCH (GAME) */
-        #workbench { flex-grow: 1; position: relative; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #15151f 0%, #050507 100%); }
-        #pc-case { width: 550px; height: 650px; background: #0c0c0f; border: 2px solid #222; position: relative; border-radius: 4px; box-shadow: 0 0 100px rgba(0,0,0,0.8); }
-        
-        .slot { position: absolute; border: 1px dashed #333; display: flex; align-items: center; justify-content: center; font-size: 9px; cursor: pointer; transition: 0.2s; color: #444; z-index: 5; }
-        .slot:hover { border-color: var(--blue); background: rgba(0,136,255,0.05); color: var(--blue); }
-        .slot.installed { border-style: solid; border-color: var(--green); background: #1a1a22; color: var(--green); font-weight: bold; }
+        /* HUD & UI */
+        .hud-card { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.9); padding: 15px; border-left: 4px solid var(--blue); z-index: 100; min-width: 220px; }
+        #phone { position: absolute; bottom: 20px; right: 20px; width: 220px; background: #000; border: 2px solid #333; border-radius: 15px; padding: 15px; z-index: 100; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .btn { background: var(--blue); color: #fff; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: 800; font-size: 10px; margin-top: 6px; text-transform: uppercase; }
+        .btn-gold { background: var(--gold); color: #000; margin-top: 15px; }
 
-        canvas { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
-
-        /* SHOP OVERLAY */
-        #shop { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .shop-grid { display: grid; grid-template-columns: repeat(3, 150px); gap: 15px; padding: 20px; }
-        .part-card { background: #111; border: 1px solid #333; padding: 15px; text-align: center; border-radius: 4px; }
-        
-        .hidden { display: none !important; }
+        #delivery-truck { position: absolute; top: -60px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 10px 30px; font-weight: 900; transition: 0.6s; z-index: 1000; border-radius: 0 0 8px 8px; }
+        .arrived { top: 0 !important; }
     </style>
 </head>
 <body>
 
-<aside id="sidebar">
-    <div class="step-header">
-        <div class="step-num">MANUAL // PHASE <span id="step-num">1</span></div>
-        <div class="step-title" id="step-title">Hardware Briefing</div>
+<div id="tutorial-overlay">
+    <div class="tut-card">
+        <h1 style="color:var(--blue); letter-spacing:4px;">ARCHITECT_BOOT_V1</h1>
+        <p id="tut-text">Welcome to the workshop. In this sim, you must source parts to build a high-end PC. You can drive to the store for instant parts or order them to your door.</p>
+        <button class="btn" onclick="nextTut()">Next Step</button>
     </div>
-    <div class="instruction-box">
-        <div id="step-desc">Welcome, Architect. Before building, you must acquire all 6 core components from the tech shop.</div>
-        <div class="pro-tip" id="step-tip"><strong>PRO TIP:</strong> Check your inventory in the sidebar to see what's missing.</div>
-        
-        <div id="inv-check" style="margin-top:20px; border-top: 1px solid #222; padding-top:20px;">
-            <div id="i-mobo">○ Motherboard</div>
-            <div id="i-cpu">○ CPU</div>
-            <div id="i-ram">○ RAM</div>
-            <div id="i-gpu">○ GPU</div>
-            <div id="i-psu">○ PSU</div>
-            <div id="i-ssd">○ SSD</div>
-        </div>
-    </div>
-    <div class="nav-btns">
-        <button class="btn btn-dark" onclick="openShop()">Open Shop</button>
-        <button class="btn btn-blue" id="next-btn" onclick="nextStep()">Next Phase</button>
-    </div>
-</aside>
+</div>
 
-<main id="workbench">
-    <div id="pc-case">
-        <canvas id="wire-layer" width="550" height="650"></canvas>
-        <div id="s-mobo" class="slot" style="top:40px; left:40px; width:470px; height:470px;">MOBO_TRAY</div>
-        <div id="s-cpu" class="slot" style="top:100px; left:180px; width:80px; height:80px;">CPU_SOCKET</div>
-        <div id="s-ram" class="slot" style="top:100px; left:280px; width:30px; height:150px;">DIMM_1</div>
-        <div id="s-ssd" class="slot" style="top:300px; left:180px; width:100px; height:30px;">M.2_SLOT</div>
-        <div id="s-gpu" class="slot" style="top:320px; left:60px; width:350px; height:80px;">PCIe_SLOT</div>
-        <div id="s-psu" class="slot" style="bottom:20px; left:40px; width:150px; height:100px;">PSU_BAY</div>
+<div id="delivery-truck">📦 DELIVERY: NEW PART AT WORKBENCH</div>
+
+<div class="hud-card">
+    <div style="font-size: 10px; color: #555;">GPS: <span id="loc-txt" style="color:var(--gold)">WORKSHOP</span></div>
+    <div id="inv-list" style="margin-top: 10px; font-size: 11px; color: #888;">Inv: Empty</div>
+    <div id="wire-count" style="margin-top: 5px; font-size: 11px; color: var(--green);">Wires: 0/4</div>
+</div>
+
+<div id="phone">
+    <div style="text-align:center; font-size:10px; color:#444; margin-bottom:10px;">SHOP_APP</div>
+    <button class="btn" onclick="order('case')">Order Case ($100)</button>
+    <button class="btn" onclick="order('wires')">Order Wires ($40)</button>
+    <button class="btn btn-gold" onclick="travel()">🚗 DRIVE TO STORE</button>
+</div>
+
+<main id="workshop" class="scene active-scene">
+    <div id="bench">
+        <canvas id="wire-canvas" width="850" height="550"></canvas>
+        <div id="pc-case">
+            <div id="p-psu" class="port" style="bottom:20px; left:20px; width:80px; height:40px;">PSU_MAIN</div>
+            <div id="p-mobo" class="port" style="top:120px; right:20px; height:120px;">MOBO_24P</div>
+            <div id="p-cpu" class="port" style="top:20px; left:30px;">CPU_8P</div>
+            <div id="p-gpu" class="port" style="top:260px; left:120px; width:80px;">GPU_VGA</div>
+        </div>
     </div>
 </main>
 
-<div id="shop">
-    <h2 style="color:var(--blue)">TECH_DEPOT</h2>
-    <div class="shop-grid">
-        <div class="part-card">Mobo <button class="btn btn-blue" onclick="buy('mobo')">Buy</button></div>
-        <div class="part-card">CPU <button class="btn btn-blue" onclick="buy('cpu')">Buy</button></div>
-        <div class="part-card">RAM <button class="btn btn-blue" onclick="buy('ram')">Buy</button></div>
-        <div class="part-card">GPU <button class="btn btn-blue" onclick="buy('gpu')">Buy</button></div>
-        <div class="part-card">PSU <button class="btn btn-blue" onclick="buy('psu')">Buy</button></div>
-        <div class="part-card">SSD <button class="btn btn-blue" onclick="buy('ssd')">Buy</button></div>
+<main id="store" class="scene">
+    <div style="background:#fff; padding:50px; border-radius:10px; color:#111; text-align:center;">
+        <h2 style="letter-spacing:5px;">TECH-MART RETAIL</h2>
+        <div style="display:flex; gap:20px; margin-top:30px;">
+            <div style="border:1px solid #ddd; padding:20px;">
+                <h4>Standard Mobo</h4>
+                <button class="btn" onclick="buy('mobo')">Buy $200</button>
+            </div>
+            <div style="border:1px solid #ddd; padding:20px;">
+                <h4>Full Wire Kit</h4>
+                <button class="btn" onclick="buy('wires')">Buy $40</button>
+            </div>
+        </div>
+        <button class="btn btn-gold" style="margin-top:30px;" onclick="travel()">🏠 DRIVE HOME</button>
     </div>
-    <button class="btn btn-dark" style="width:200px; margin-top:20px;" onclick="closeShop()">Exit Shop</button>
-</div>
+</main>
 
 <script>
-    let state = { inv: [], installed: [], step: 1, wires: [] };
-    const steps = [
-        {}, // Padding
-        { t: "The Parts", d: "Buy all components from the shop to begin. You can't build without hardware.", p: "Start with the motherboard first once you return." },
-        { t: "The Foundation", d: "Click the MOBO_TRAY to seat the Motherboard. This is the spine of the PC.", p: "In real life, ensure your standoffs are aligned first!" },
-        { t: "The Brain", d: "Install the CPU into the socket. This is a high-precision step.", p: "Triangle to Triangle. Never force a CPU into the socket." },
-        { t: "Wiring Time", d: "Click the PSU, then click the Motherboard to run the 24-Pin power line.", p: "This cable provides the main voltage to the system." }
+    let state = { inv: [], loc: 'workshop', activePort: null, connections: 0 };
+    const canvas = document.getElementById('wire-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // 1. TUTORIAL LOGIC
+    let tutStep = 0;
+    const tutTexts = [
+        "First, you need Wires. Order them on your phone or Drive to the store to get them faster.",
+        "Once you have wires, click the PSU_MAIN terminal to grab a cable.",
+        "Then, click a component like MOBO_24P to plug it in. Real PCs won't boot without every wire connected!",
+        "Good luck, Architect. The bench is yours."
     ];
 
-    function openShop() { document.getElementById('shop').style.display = 'flex'; }
-    function closeShop() { document.getElementById('shop').style.display = 'none'; }
-    
+    function nextTut() {
+        if(tutStep < tutTexts.length) {
+            document.getElementById('tut-text').innerText = tutTexts[tutStep];
+            tutStep++;
+        } else {
+            document.getElementById('tutorial-overlay').style.display = 'none';
+        }
+    }
+
+    // 2. LOGISTICS LOGIC
+    function travel() {
+        const toStore = state.loc === 'workshop';
+        document.getElementById(state.loc).classList.remove('active-scene');
+        state.loc = toStore ? 'store' : 'workshop';
+        document.getElementById(state.loc).classList.add('active-scene');
+        document.getElementById('loc-txt').innerText = state.loc.toUpperCase();
+    }
+
     function buy(item) {
         if(!state.inv.includes(item)) {
             state.inv.push(item);
-            document.getElementById('i-'+item).style.color = 'var(--green)';
-            document.getElementById('i-'+item).innerText = '✓ ' + item.toUpperCase();
+            updateInvDisplay();
+            alert(item.toUpperCase() + " added to your trunk.");
         }
     }
 
-    function nextStep() {
-        if(state.step < 4) {
-            state.step++;
-            updateUI();
-        }
+    function order(item) {
+        alert("Parcel dispatched! Truck is en-route.");
+        setTimeout(() => {
+            state.inv.push(item);
+            updateInvDisplay();
+            const truck = document.getElementById('delivery-truck');
+            truck.classList.add('arrived');
+            setTimeout(() => truck.classList.remove('arrived'), 3000);
+        }, 5000);
     }
 
-    function updateUI() {
-        document.getElementById('step-num').innerText = state.step;
-        document.getElementById('step-title').innerText = steps[state.step].t;
-        document.getElementById('step-desc').innerText = steps[state.step].d;
-        document.getElementById('step-tip').innerHTML = `<strong>PRO TIP:</strong> ${steps[state.step].p}`;
+    function updateInvDisplay() {
+        document.getElementById('inv-list').innerText = "Inv: " + state.inv.join(', ').toUpperCase();
     }
 
-    document.querySelectorAll('.slot').forEach(slot => {
-        slot.onclick = () => {
-            const part = slot.id.split('-')[1];
-            if(state.inv.includes(part) && !state.installed.includes(part)) {
-                // Logic Check
-                if(part === 'mobo' && state.step === 2) { 
-                    slot.classList.add('installed');
-                    state.installed.push(part);
-                    nextStep();
-                } else if(part === 'cpu' && state.step === 3) {
-                    slot.classList.add('installed');
-                    state.installed.push(part);
-                    nextStep();
-                } else {
-                    slot.classList.add('installed');
-                    state.installed.push(part);
-                }
+    // 3. WIRING LOGIC
+    document.querySelectorAll('.port').forEach(port => {
+        port.onclick = () => {
+            if(!state.inv.includes('wires')) {
+                alert("ERROR: You have no wires in your inventory. Go to the store or order them.");
+                return;
+            }
+
+            if(port.id === 'p-psu') {
+                state.activePort = port;
+                port.style.borderColor = 'var(--gold)';
+            } else if(state.activePort) {
+                drawWire(state.activePort, port);
+                state.activePort = null;
             }
         };
     });
 
-    updateUI();
+    function drawWire(start, end) {
+        if(end.classList.contains('connected')) return;
+        
+        end.classList.add('connected');
+        state.connections++;
+        document.getElementById('wire-count').innerText = `Wires: ${state.connections}/3`;
+
+        const sX = start.offsetLeft + start.offsetWidth/2 + 215; // Centering adjustment
+        const sY = start.offsetTop + start.offsetHeight/2 + 40;
+        const eX = end.offsetLeft + end.offsetWidth/2 + 215;
+        const eY = end.offsetTop + end.offsetHeight/2 + 40;
+
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 7;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(sX, sY);
+        ctx.bezierCurveTo(sX, eY + 60, eX, eY + 60, eX, eY);
+        ctx.stroke();
+
+        if(state.connections === 3) {
+            alert("SYSTEM ONLINE: All physical connections verified.");
+        }
+    }
 </script>
 </body>
 </html>
