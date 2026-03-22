@@ -2,155 +2,160 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PC_TYCOON // REAL_SIM</title>
+    <title>PC_TYCOON // THE_WORKSHOP</title>
     <style>
-        :root { --grass: #348232; --road: #334155; --shop: #1e293b; --player: #38bdf8; }
-        body { margin: 0; background: var(--grass); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
+        :root { --grass: #348232; --road: #334155; --floor: #1e293b; --player: #38bdf8; --money: #4ade80; }
+        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
+
+        /* CAMERA SYSTEM */
+        #viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; transition: 0.5s ease-in-out; }
+
+        /* WORLD MAP (OUTSIDE) */
+        #outside { width: 100vw; height: 100vh; background: var(--grass); position: absolute; }
+        .road { position: absolute; top: 50%; width: 100%; height: 100px; background: var(--road); transform: translateY(-50%); }
+        
+        /* BUILDINGS */
+        .building-ext { position: absolute; width: 250px; height: 200px; border: 6px solid #111; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+        #shop-ext { left: 100px; top: 50px; background: #2d3748; border-color: var(--player); }
+        #mart-ext { right: 100px; top: 50px; background: #cbd5e1; color: #111; }
+
+        /* THE WORKSHOP (INTERIOR) */
+        #interior { 
+            width: 100vw; height: 100vh; background: #111; 
+            position: absolute; top: 100%; transition: 0.5s; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .inside-room { 
+            width: 80%; height: 80%; background: var(--floor); border: 10px solid #334155; 
+            position: relative; background-image: radial-gradient(#2d3748 1px, transparent 1px); background-size: 40px 40px;
+        }
+        .table { width: 150px; height: 100px; background: #475569; border: 4px solid #000; position: absolute; top: 50px; left: 50px; }
+
+        /* THE PLAYER */
+        #player { 
+            position: absolute; width: 44px; height: 60px; 
+            top: 500px; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 1000;
+        }
+        .char { width: 30px; height: 40px; background: var(--player); border: 3px solid #000; margin: 20px auto 0; border-radius: 4px; position: relative; }
+        .head { width: 24px; height: 24px; background: #ffdbac; border: 3px solid #000; position: absolute; top: -18px; left: 0; border-radius: 4px; }
+        .item-box { display: none; position: absolute; top: -30px; left: 5px; font-size: 20px; }
+
+        /* WIRING UI */
+        #wire-gui { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5000; }
+        #pc-case { width: 400px; height: 450px; background: #000; border: 2px solid #333; position: relative; }
+        .port { position: absolute; width: 25px; height: 25px; background: #111; border: 1px solid #444; }
+        .connected { background: var(--money) !important; box-shadow: 0 0 15px var(--money); }
 
         /* HUD */
-        #hud { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.9); padding: 15px 25px; border-radius: 12px; z-index: 1000; border: 2px solid #444; }
-        .money { color: #4ade80; font-weight: 900; font-size: 24px; text-shadow: 0 0 10px rgba(74,222,128,0.3); }
-
-        /* WORLD MAP */
-        #world { width: 100vw; height: 100vh; position: relative; background: radial-gradient(circle, #45a043 0%, #2d5a27 100%); }
-        .road { position: absolute; top: 50%; left: 0; width: 100%; height: 120px; background: var(--road); transform: translateY(-50%); border-top: 5px solid #444; border-bottom: 5px solid #444; }
-
-        .building { position: absolute; width: 320px; height: 260px; border: 8px solid #111; border-radius: 4px; box-shadow: 0 20px 0 #000; }
-        #my-shop { left: 80px; top: 40px; background: #2d3748; }
-        #tech-mart { right: 80px; top: 40px; background: #cbd5e1; color: #111; }
-
-        /* ANIMATED CHARACTER */
-        #player { 
-            position: absolute; width: 48px; height: 64px; 
-            top: 450px; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 500; transition: transform 0.1s;
-        }
-        .character-body { width: 100%; height: 100%; position: relative; }
-        .head { width: 24px; height: 24px; background: #ffdbac; border-radius: 50%; position: absolute; top: 0; left: 12px; border: 2px solid #000; }
-        .torso { width: 32px; height: 30px; background: var(--player); border-radius: 4px; position: absolute; top: 22px; left: 8px; border: 2px solid #000; }
-        .leg { width: 10px; height: 14px; background: #1e293b; position: absolute; bottom: 0; border: 2px solid #000; }
-        .leg.left { left: 8px; } .leg.right { right: 8px; }
-        
-        /* WALKING ANIMATION */
-        .walking .leg.left { animation: walk 0.2s infinite alternate; }
-        .walking .leg.right { animation: walk 0.2s infinite alternate-reverse; }
-        @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-5px); } }
-
-        /* WIRING ZOOM */
-        #wiring-ui { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.98); 
-            display: none; align-items: center; justify-content: center; z-index: 2000; 
-        }
-        #case { width: 450px; height: 500px; background: #0a0a0f; border: 4px solid #334155; position: relative; box-shadow: 0 0 50px #000; }
-        .port { position: absolute; width: 30px; height: 30px; background: #1a1a2e; border: 2px solid #444; cursor: pointer; border-radius: 4px; z-index: 100; }
-        .port.connected { background: #00ff88; box-shadow: 0 0 20px #00ff88; border-color: white; }
-        canvas { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+        #hud { position: fixed; top: 20px; left: 20px; background: #000; padding: 10px 20px; border: 2px solid #333; z-index: 9000; }
     </style>
 </head>
 <body>
 
-<div id="hud">
-    <div class="money">$<span id="cash">750</span></div>
-    <div id="status" style="font-size: 11px; color: #94a3b8; margin-top: 5px; text-transform: uppercase; font-weight: bold;">Mission: Go to Tech-Mart</div>
-</div>
+<div id="hud">CASH: <span style="color:var(--money)">$<span id="cash">1000</span></span></div>
 
-<div id="world">
-    <div class="road"></div>
-    <div id="my-shop" class="building"><div style="padding:20px; font-weight:900;">CUSTOM REPAIRS</div></div>
-    <div id="tech-mart" class="building">
-        <div style="padding:20px; font-weight:900; text-align:right;">WHOLESALE PARTS</div>
-        <button onclick="buyBox()" style="position:absolute; bottom:20px; right:20px; padding:15px; background:#ef4444; color:white; border:none; font-weight:bold; cursor:pointer; border-radius:5px;">BUY PC BOX ($400)</button>
+<div id="viewport">
+    <div id="outside">
+        <div class="road"></div>
+        <div id="shop-ext" class="building-ext">MY WORKSHOP<br><small>(WALK IN)</small></div>
+        <div id="mart-ext" class="building-ext">TECH-MART<br><button onclick="buyPart()">BUY $400</button></div>
+    </div>
+
+    <div id="interior">
+        <div class="inside-room">
+            <div class="table" id="build-trigger">BUILD TABLE</div>
+            <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#666;">WALK DOWN TO EXIT</div>
+        </div>
     </div>
 
     <div id="player">
-        <div class="character-body">
-            <div class="head"></div>
-            <div class="torso"></div>
-            <div class="leg left"></div>
-            <div class="leg right"></div>
-            <div id="handheld" style="display:none; position:absolute; top:10px; left:10px; font-size:24px;">📦</div>
-        </div>
+        <div class="char"><div class="head"></div><div id="box" class="item-box">📦</div></div>
     </div>
 </div>
 
-<div id="wiring-ui">
-    <div style="text-align:center;">
-        <h2 style="color:var(--player); letter-spacing:5px;">WIRING STAGE</h2>
-        <div id="case">
-            <canvas id="wire-canvas" width="450" height="500"></canvas>
-            <div id="p-psu" class="port" style="bottom: 40px; left: 40px;">PSU</div>
-            <div id="p-mobo" class="port" style="top: 120px; right: 40px; height: 120px;">MOBO</div>
-        </div>
-        <button onclick="sellBuild()" style="margin-top: 30px; padding: 15px 50px; background: #00ff88; color: #000; border: none; font-weight: 900; cursor: pointer; border-radius: 5px;">COMPLETE & SELL PC</button>
+<div id="wire-gui">
+    <h2>WIRING PC...</h2>
+    <div id="pc-case">
+        <canvas id="c" width="400" height="450" style="position:absolute;"></canvas>
+        <div id="p-psu" class="port" style="bottom:20px; left:20px;"></div>
+        <div id="p-mb" class="port" style="top:100px; right:20px; height:100px;"></div>
     </div>
+    <button onclick="finishBuild()" style="margin-top:20px; padding:10px 40px; background:var(--money); border:none; font-weight:bold; cursor:pointer;">SELL PC ($1200)</button>
 </div>
 
 <script>
-    let g = { x: window.innerWidth/2, y: 500, cash: 750, hasBox: false, conn: 0, activeP: null };
+    let g = { x: window.innerWidth/2, y: 450, cash: 1000, hasBox: false, mode: 'outside', connections: 0, activeP: null };
     const p = document.getElementById('player');
-    const cvs = document.getElementById('wire-canvas');
+    const view = document.getElementById('interior');
+    const cvs = document.getElementById('c');
     const ctx = cvs.getContext('2d');
 
     const keys = {};
-    window.addEventListener('keydown', e => { keys[e.key] = true; p.classList.add('walking'); });
-    window.addEventListener('keyup', e => { keys[e.key] = false; p.classList.remove('walking'); });
+    window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-    function update() {
-        if (keys['ArrowUp'] || keys['w']) g.y -= 6;
-        if (keys['ArrowDown'] || keys['s']) g.y += 6;
-        if (keys['ArrowLeft'] || keys['a']) { g.x -= 6; p.style.transform = 'translate(-50%, -50%) scaleX(-1)'; }
-        if (keys['ArrowRight'] || keys['d']) { g.x += 6; p.style.transform = 'translate(-50%, -50%) scaleX(1)'; }
+    function loop() {
+        const s = 6;
+        if(keys['w'] || keys['arrowup']) g.y -= s;
+        if(keys['s'] || keys['arrowdown']) g.y += s;
+        if(keys['a'] || keys['arrowleft']) g.x -= s;
+        if(keys['d'] || keys['arrowright']) g.x += s;
 
-        p.style.top = g.y + 'px';
         p.style.left = g.x + 'px';
+        p.style.top = g.y + 'px';
 
-        // Check Building Entry
-        if(g.y < 300) {
-            if(g.x < 400 && g.hasBox) { document.getElementById('wiring-ui').style.display = 'flex'; }
-        }
-        requestAnimationFrame(update);
+        checkLogic();
+        requestAnimationFrame(loop);
     }
-    update();
+    loop();
 
-    function buyBox() {
+    function buyPart() {
         if(g.cash >= 400 && !g.hasBox) {
-            g.cash -= 400;
-            g.hasBox = true;
+            g.cash -= 400; g.hasBox = true;
             document.getElementById('cash').innerText = g.cash;
-            document.getElementById('handheld').style.display = 'block';
-            document.getElementById('status').innerText = "Mission: Enter Workshop";
+            document.getElementById('box').style.display = 'block';
         }
     }
 
-    document.querySelectorAll('.port').forEach(port => {
-        port.onclick = () => {
-            if (port.id === 'p-psu') { g.activeP = port; port.style.borderColor = 'cyan'; } 
-            else if (g.activeP) { connect(g.activeP, port); g.activeP = null; }
+    function checkLogic() {
+        // ENTER SHOP
+        if(g.mode === 'outside' && g.x < 350 && g.y < 250) {
+            g.mode = 'inside';
+            view.style.top = '0';
+            g.y = 500; // Reset pos to bottom of room
+        }
+        // EXIT SHOP
+        if(g.mode === 'inside' && g.y > 550) {
+            g.mode = 'outside';
+            view.style.top = '100%';
+            g.y = 350;
+        }
+        // TRIGGER BUILD
+        if(g.mode === 'inside' && g.x < 250 && g.y < 200 && g.hasBox) {
+            document.getElementById('wire-gui').style.display = 'flex';
+        }
+    }
+
+    // WIRING
+    document.querySelectorAll('.port').forEach(pt => {
+        pt.onclick = () => {
+            if(pt.id === 'p-psu') g.activeP = pt;
+            else if(g.activeP) {
+                pt.classList.add('connected'); g.connections++;
+                ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 6;
+                ctx.beginPath(); ctx.moveTo(32, 412); ctx.lineTo(378, 150); ctx.stroke();
+            }
         };
     });
 
-    function connect(s, e) {
-        if (e.classList.contains('connected')) return;
-        e.classList.add('connected');
-        g.conn++;
-        
-        ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(55, 455);
-        ctx.bezierCurveTo(55, 200, 400, 400, 410, 180);
-        ctx.stroke();
-    }
-
-    function sellBuild() {
-        if(g.conn > 0) {
-            g.cash += 1200;
-            g.hasBox = false; g.conn = 0;
-            ctx.clearRect(0,0,450,500);
+    function finishBuild() {
+        if(g.connections > 0) {
+            g.cash += 1200; g.hasBox = false; g.connections = 0;
             document.getElementById('cash').innerText = g.cash;
-            document.getElementById('wiring-ui').style.display = 'none';
-            document.getElementById('handheld').style.display = 'none';
-            document.getElementById('status').innerText = "Mission: Buy more parts";
-            g.y = 350; // Exit shop
+            document.getElementById('wire-gui').style.display = 'none';
+            document.getElementById('box').style.display = 'none';
+            ctx.clearRect(0,0,400,450);
             document.querySelectorAll('.port').forEach(pt => pt.classList.remove('connected'));
         }
     }
